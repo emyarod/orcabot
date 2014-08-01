@@ -15,5 +15,5 @@ var bot = new irc.Client(config.server, config.botName, {
 
 // Listen for any message, say to him/her in the room
 bot.addListener("message", function(from, to, text, message) {
-	bot.say(config.channels[0], "¿Public que?");
+	bot.say(config.channels[0], "(⊙ ◡ ⊙)");
 });
