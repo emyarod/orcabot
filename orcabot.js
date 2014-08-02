@@ -1,17 +1,13 @@
 // configure bot
-var config = {
-	channels: ["#house"],
-	server: "irc.snoonet.org",
-	botName: "orcabot",
-	realName: "https://github.com/emyarod/orcabot",
-};
+var config = require("./config");
 
-// get lib
+// get irc package
 var irc = require("irc");
 
 // bot name
 var bot = new irc.Client(config.server, config.botName, {
 	channels: config.channels,
+	userName: config.botName,
 	realName: config.realName
 });
 
