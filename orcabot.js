@@ -42,13 +42,16 @@ var t = new twit({
 
 });
 
-
 bot.addListener("message", function(from, to, message) {
 	if(message.indexOf(".tw") > -1) {
 		message = message.replace(".tw ", "");
 		var screenName = message;
 		t.get("statuses/user_timeline", {screen_name: screenName, count: 1}, function (err, data, response) {
-			bot.say(to, "Most recent tweet by " + "\u0002" + data[0].user.name + "\u0002 "  + "(\u0002@" + screenName + "\u0002" + ")" + "\u0002 | \u0002" + data[0].text + "\u0002 | \u0002" + data[0].created_at);
+			if(data === undefined) {
+				bot.say(to, "User not found!");
+			} else {
+				bot.say(to, "Most recent tweet by " + "\u0002" + data[0].user.name + "\u0002 "  + "(\u0002@" + data[0].user.screen_name + "\u0002" + ")" + "\u0002 | \u0002" + data[0].text + "\u0002 | \u0002" + data[0].created_at);
+			}
 		});
 	}
 });
