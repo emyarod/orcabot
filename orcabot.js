@@ -6,6 +6,7 @@ var irc = require("irc");
 var twit = require("twit");
 var fs = require("fs");
 var LastFmNode = require("lastfm").LastFmNode;
+var ig = require("instagram-node").instagram();
 
 //get modules
 
@@ -72,9 +73,9 @@ bot.addListener("message", function(from, to, text) {
 		text = text.replace(".tw ", "");
 		t.get("statuses/user_timeline", {screen_name: text, count: 1}, function (err, data, response) {
 			if(data === undefined) {
-				bot.say(to, "User not found!");
+				bot.say(to, "Twitter " + cyan + bold + "| " + reset + bold + text + reset + " is not a valid Twitter handle!");
 			} else {
-				bot.say(to, "Most recent tweet by " + bold + data[0].user.name + bold + " "  + "(" + bold + "@" + data[0].user.screen_name + bold + ")" + bold + lightBlue + " | " + bold + reset + data[0].text + lightBlue + bold + " | " + bold + reset + data[0].created_at);
+				bot.say(to, "Twitter " + cyan + bold + "| " + bold + reset + "Most recent tweet by " + bold + data[0].user.name + bold + " "  + "(" + bold + "@" + data[0].user.screen_name + bold + ")" + bold + cyan + " | " + bold + reset + data[0].text + cyan + bold + " | " + bold + reset + data[0].created_at);
 			}
 		});
 	}
@@ -267,6 +268,32 @@ bot.addListener("message", function(from, to, text) {
 				error: function(error) {
 					bot.say(to, "Last.fm " + lightRed + bold + "| " + bold + reset + bold + text + bold + " is not a registered username on Last.fm!");
 				}
+			}
+		});
+	}
+});
+
+// instagram
+
+ig.use({
+	client_id: config.igClientId,
+	client_secret: config.igClientSecret
+});
+
+bot.addListener("message", function(from, to, text) {
+	if(text.search(".ig ") > -1 && text.search(".ig ") === 0) {
+		text = text.replace(".ig ", "");
+		ig.user_search(text, {count: 1}, function(err, users, limit) {
+			if(users.length > 0 && users[0].username === text) {
+				ig.user_media_recent(users[0].id, {count: 1}, function(err, medias, pagination, limit) {
+					if(medias[0].caption !== null) {
+						bot.say(to, "Instagram " + lightBlue + bold + "| " + reset + "Most recent post by " + bold + text + " (" + medias[0].user.full_name + ")" + lightBlue + " | " + reset + medias[0].caption.text + " " + (medias[0].link).replace("instagram.com", "instagr.am") + lightBlue + bold + " | " + reset + "Filter: " + medias[0].filter);
+					} else {
+						bot.say(to, "Instagram " + lightBlue + bold + "| " + reset + "Most recent post by " + bold + text + " (" + medias[0].user.full_name + ")" + lightBlue + " | " + reset + "No caption " + (medias[0].link).replace("instagram.com", "instagr.am") + lightBlue + bold + " | " + reset + "Filter: " + medias[0].filter);
+					}
+				});
+			} else {
+				bot.say(to, "Instagram " + lightBlue + bold + "| " + bold + reset + bold + text + bold + " is not a registered user on Instagram!");
 			}
 		});
 	}
