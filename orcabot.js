@@ -88,8 +88,14 @@ var lastfm = new LastFmNode({
 });
 
 var lastfmdb = "./lastfmdb.json";
+var hostsAndAccounts = {};
+var hostNames = {};
 
-// register hostname into database .addlastfm <user>
+fs.readFile(lastfmdb, "utf8", function(err, data) {
+	if(err) throw err;
+	hostsAndAccounts = JSON.parse(data);
+	hostNames = Object.keys(hostsAndAccounts);
+});
 
 bot.addListener("message", function(from, to, text, message) {
 	if(text.search(".addlastfm ") > -1 && text.search(".addlastfm ") === 0) {
@@ -98,20 +104,16 @@ bot.addListener("message", function(from, to, text, message) {
 			user: text,
 			handlers: {
 				success: function(data) {
-					fs.readFile(lastfmdb, "utf8", function(err, data) {
-						if (err) throw err;
-						var hostsAndAccounts = JSON.parse(data);
-						var hostNames = Object.keys(hostsAndAccounts);
 						if(hostNames.indexOf(message.host) > -1) {
 							bot.say(to, "Last.fm " + lightRed + bold + "| " + reset + bold + from + bold + " (" + message.host + ")" + " already has an associated Last.fm account (http://www.last.fm/user/" + Object.getOwnPropertyDescriptor(hostsAndAccounts[message.host], "lfm").value + reset + ")!");
 						} else {
 							hostsAndAccounts[message.host] = {"lfm": text};
 							fs.writeFile(lastfmdb, JSON.stringify(hostsAndAccounts, null, 4), function (err) {
 								if(err) throw err;
+								hostNames = Object.keys(hostsAndAccounts);
 							});
 							bot.say(to, "Last.fm " + lightRed + bold + "| " + reset + "User " + bold + text + bold + reset + " is now associated with hostname " + bold + message.host);
 						}
-					});
 				},
 				error: function(error) {
 					bot.say(to, "Last.fm " + lightRed + bold + "| " + bold + reset + bold + text + bold + " is not a registered username on Last.fm!");
@@ -148,38 +150,33 @@ bot.addListener("message", function(from, to, text, message) {
 			}
 		});
 	} else if(text === ".np") {
-		fs.readFile(lastfmdb, "utf8", function(err, data) {
-			if (err) throw err;
-			var hostsAndAccounts = JSON.parse(data);
-			var hostNames = Object.keys(hostsAndAccounts);
-			if(hostNames.indexOf(message.host) > -1) {
-				var lfmAccount = Object.getOwnPropertyDescriptor(hostsAndAccounts[message.host], "lfm").value;
-				lastfm.request("user.getRecentTracks", {
-					user: lfmAccount,
-					handlers: {
-						success: function(data) {
-							if(data.recenttracks.track[0]["@attr"] === undefined) {
-								if(data.recenttracks.track[0].album['#text'] !== "") {
-									bot.say(to, "Last.fm " + lightRed + bold + "| " + reset + bold + lfmAccount + reset + " last listened to " + "\"" + data.recenttracks.track[0].name + "\"" + " by " + data.recenttracks.track[0].artist["#text"] + " from " + underline + data.recenttracks.track[0].album["#text"] + underline + lightRed + bold + " | " + reset + "http://www.last.fm/user/" + lfmAccount + "/now");
-								} else {
-									bot.say(to, "Last.fm " + lightRed + bold + "| " + reset + bold + lfmAccount + reset + " last listened to " + "\"" + data.recenttracks.track[0].name + "\"" + " by " + data.recenttracks.track[0].artist["#text"] + lightRed + bold + " | " + reset + "http://www.last.fm/user/" + lfmAccount + "/now");
-								}
-							} else if(data.recenttracks.track[0].album['#text'] !== "") {
-								bot.say(to, "Last.fm " + lightRed + bold + "| " + reset + bold + lfmAccount + reset + " is listening to " + "\"" + data.recenttracks.track[0].name + "\"" + " by " + data.recenttracks.track[0].artist["#text"] + " from " + underline + data.recenttracks.track[0].album["#text"] + underline + lightRed + bold + " | " + reset + "http://www.last.fm/user/" + lfmAccount + "/now");
+		if(hostNames.indexOf(message.host) > -1) {
+			var lfmAccount = Object.getOwnPropertyDescriptor(hostsAndAccounts[message.host], "lfm").value;
+			lastfm.request("user.getRecentTracks", {
+				user: lfmAccount,
+				handlers: {
+					success: function(data) {
+						if(data.recenttracks.track[0]["@attr"] === undefined) {
+							if(data.recenttracks.track[0].album['#text'] !== "") {
+								bot.say(to, "Last.fm " + lightRed + bold + "| " + reset + bold + lfmAccount + reset + " last listened to " + "\"" + data.recenttracks.track[0].name + "\"" + " by " + data.recenttracks.track[0].artist["#text"] + " from " + underline + data.recenttracks.track[0].album["#text"] + underline + lightRed + bold + " | " + reset + "http://www.last.fm/user/" + lfmAccount + "/now");
 							} else {
-								bot.say(to, "Last.fm " + lightRed + bold + "| " + reset + bold + lfmAccount + reset + " is listening to " + "\"" + data.recenttracks.track[0].name + "\"" + " by " + data.recenttracks.track[0].artist["#text"] + lightRed + bold + " | " + reset + "http://www.last.fm/user/" + lfmAccount + "/now");
+								bot.say(to, "Last.fm " + lightRed + bold + "| " + reset + bold + lfmAccount + reset + " last listened to " + "\"" + data.recenttracks.track[0].name + "\"" + " by " + data.recenttracks.track[0].artist["#text"] + lightRed + bold + " | " + reset + "http://www.last.fm/user/" + lfmAccount + "/now");
 							}
-						},
-						error: function(error) {
-							bot.say(to, "Last.fm " + lightRed + bold + "| " + bold + text + bold + " is not a registered username on Last.fm!");
+						} else if(data.recenttracks.track[0].album['#text'] !== "") {
+							bot.say(to, "Last.fm " + lightRed + bold + "| " + reset + bold + lfmAccount + reset + " is listening to " + "\"" + data.recenttracks.track[0].name + "\"" + " by " + data.recenttracks.track[0].artist["#text"] + " from " + underline + data.recenttracks.track[0].album["#text"] + underline + lightRed + bold + " | " + reset + "http://www.last.fm/user/" + lfmAccount + "/now");
+						} else {
+							bot.say(to, "Last.fm " + lightRed + bold + "| " + reset + bold + lfmAccount + reset + " is listening to " + "\"" + data.recenttracks.track[0].name + "\"" + " by " + data.recenttracks.track[0].artist["#text"] + lightRed + bold + " | " + reset + "http://www.last.fm/user/" + lfmAccount + "/now");
 						}
+				},
+					error: function(error) {
+						bot.say(to, "Last.fm " + lightRed + bold + "| " + bold + text + bold + " is not a registered username on Last.fm!");
 					}
-				});
-			} else {
-				lfmAccount = from;
-				bot.say(to, "Last.fm " + lightRed + bold + "| " + reset + bold + lfmAccount + bold + " doesn't exist in my database! Please use " + "\"" + ".addlastfm <last.fm username>" + "\"" + " to add yourself the db. You must be identified on " + config.server + ".");
-			}
-		});
+				}
+			});
+		} else {
+			lfmAccount = from;
+			bot.say(to, "Last.fm " + lightRed + bold + "| " + reset + bold + lfmAccount + bold + " doesn't exist in my database! Please use " + "\"" + ".addlastfm <last.fm username>" + "\"" + " to add yourself the db. You must be identified on " + config.server + ".");
+		}
 	}
 });
 
@@ -204,32 +201,27 @@ bot.addListener("message", function(from, to, text, message) {
 			}
 		});
 	} else if(text === ".charts") {
-		fs.readFile(lastfmdb, "utf8", function(err, data) {
-			if (err) throw err;
-			var hostsAndAccounts = JSON.parse(data);
-			var hostNames = Object.keys(hostsAndAccounts);
-			if(hostNames.indexOf(message.host) > -1) {
-				var lfmAccount = Object.getOwnPropertyDescriptor(hostsAndAccounts[message.host], "lfm").value;
-				lastfm.request("user.getWeeklyArtistChart", {
-					user: lfmAccount,
-					handlers: {
-						success: function(data) {
-							var charts = [];
-							for(i = 0; i < 5; i++) {
-								charts.push(data.weeklyartistchart.artist[i].name + " (" + data.weeklyartistchart.artist[i].playcount + ")");
-							}
-							bot.say(to, "Last.fm weekly charts for " + bold + lfmAccount + lightRed + " | " + reset + charts.join(", "));
-						},
-						error: function(error) {
-							bot.say(to, "Last.fm " + lightRed + bold + "| " + bold + reset + bold + lfmAccount + bold + " is not a registered username on Last.fm!");
+		if(hostNames.indexOf(message.host) > -1) {
+			var lfmAccount = Object.getOwnPropertyDescriptor(hostsAndAccounts[message.host], "lfm").value;
+			lastfm.request("user.getWeeklyArtistChart", {
+				user: lfmAccount,
+				handlers: {
+					success: function(data) {
+						var charts = [];
+						for(i = 0; i < 5; i++) {
+							charts.push(data.weeklyartistchart.artist[i].name + " (" + data.weeklyartistchart.artist[i].playcount + ")");
 						}
+						bot.say(to, "Last.fm weekly charts for " + bold + lfmAccount + lightRed + " | " + reset + charts.join(", "));
+					},
+					error: function(error) {
+						bot.say(to, "Last.fm " + lightRed + bold + "| " + bold + reset + bold + lfmAccount + bold + " is not a registered username on Last.fm!");
 					}
-				});
-			} else {
-				lfmAccount = from;
-				bot.say(to, "Last.fm " + lightRed + bold + "| " + reset + bold + lfmAccount + bold + " doesn't exist in my database! Please use " + "\"" + ".addlastfm <last.fm username>" + "\"" + " to add yourself the db. You must be identified on " + config.server + ".");
-			}
-		});
+				}
+			});
+		} else {
+			lfmAccount = from;
+			bot.say(to, "Last.fm " + lightRed + bold + "| " + reset + bold + lfmAccount + bold + " doesn't exist in my database! Please use " + "\"" + ".addlastfm <last.fm username>" + "\"" + " to add yourself the db. You must be identified on " + config.server + ".");
+		}
 	}
 });
 
