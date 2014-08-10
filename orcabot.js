@@ -14,7 +14,8 @@ var ig = require("instagram-node").instagram();
 var bot = new irc.Client(config.server, config.botName, {
 	channels: config.channels,
 	userName: config.botName,
-	realName: config.realName
+	realName: config.realName,
+	password: config.password
 });
 
 // greeting
