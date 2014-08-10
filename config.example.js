@@ -8,7 +8,9 @@ var config = {
 	twitterAccessToken: "twitterAccessToken",
 	twitterAccessTokenSecret: "twitterAccessTokenSecret",
 	lfmApiKey: "lfmApiKey",
-	lfmSecret: "lfmSecret"
+	lfmSecret: "lfmSecret",
+	igClientId: "igClientId",
+	igClientSecret: "igClientSecret"
 };
 
 module.exports = config;
