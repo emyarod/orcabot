@@ -1,5 +1,5 @@
 var config = {
-	channels: [""],
+	channels: ["#channel1", "#channel2"],
 	server: "",
 	botName: "",
 	realName: "https://github.com/emyarod/orcabot",
