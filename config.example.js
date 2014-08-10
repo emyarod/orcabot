@@ -3,6 +3,7 @@ var config = {
 	server: "",
 	botName: "",
 	realName: "https://github.com/emyarod/orcabot",
+	password: "password",
 	twitterConsumerKey: "twitterConsumerKey",
 	twitterConsumerSecret: "twitterConsumerSecret",
 	twitterAccessToken: "twitterAccessToken",
