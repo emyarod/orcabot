@@ -99,6 +99,7 @@ bot.addListener("message", function(from, to, text, message) {
 			handlers: {
 				success: function(data) {
 					fs.readFile(lastfmdb, "utf8", function(err, data) {
+						if (err) throw err;
 						var hostsAndAccounts = JSON.parse(data);
 						var hostNames = Object.keys(hostsAndAccounts);
 						if(hostNames.indexOf(message.host) > -1) {
@@ -148,6 +149,7 @@ bot.addListener("message", function(from, to, text, message) {
 		});
 	} else if(text === ".np") {
 		fs.readFile(lastfmdb, "utf8", function(err, data) {
+			if (err) throw err;
 			var hostsAndAccounts = JSON.parse(data);
 			var hostNames = Object.keys(hostsAndAccounts);
 			if(hostNames.indexOf(message.host) > -1) {
@@ -203,6 +205,7 @@ bot.addListener("message", function(from, to, text, message) {
 		});
 	} else if(text === ".charts") {
 		fs.readFile(lastfmdb, "utf8", function(err, data) {
+			if (err) throw err;
 			var hostsAndAccounts = JSON.parse(data);
 			var hostNames = Object.keys(hostsAndAccounts);
 			if(hostNames.indexOf(message.host) > -1) {
