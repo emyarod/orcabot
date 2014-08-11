@@ -320,7 +320,6 @@ bot.addListener("message", function(from, to, text, message) {
 					// strip html, strip whitespace, decode entities, trim
 					var reply = entities.decode(data.artist.bio.summary);
 					bot.say(to, "Last.fm " + lightRed + bold + "| " + reset + reply.replace(/<(?:.|\n)*?>/gm, "").replace(/\s+/g, " ").trim());
-					console.log((reply.replace(/<(?:.|\n)*?>/gm, "").replace(/\s+/g, " ").trim()));
 				},
 				error: function(error) {
 					bot.say(to, "Last.fm " + lightRed + bold + "| " + bold + reset + bold + text + bold + " is not a valid artist on Last.fm!");
@@ -335,22 +334,22 @@ bot.addListener("message", function(from, to, text, message) {
 bot.addListener("message", function(from, to, text, message) {
 	if(text.search(".similar ") > -1 && text.search(".similar ") === 0) {
 		text = text.replace(".similar ", "");
-			lastfm.request("artist.getSimilar", {
-				artist: text,
-				autocorrect: 1,
-				limit: 5,
-				handlers: {
-					success: function(data) {
-						var charts = [];
-							for(i = 0; i < 5; i++) {
-								charts.push(data.similarartists.artist[i].name + " (" + (data.similarartists.artist[i].match*100).toFixed(2) + "% match" + ")");
-							}
-						bot.say(to, "Last.fm " + lightRed + bold + "| " + reset + "Artists similar to " + bold + text + lightRed + " | " + reset + charts.join(", "));
-					},
-					error: function(error) {
-						bot.say(to, "Last.fm " + lightRed + bold + "| " + bold + reset + bold + text + bold + " is not a valid artist on Last.fm!");
-					}
+		lastfm.request("artist.getSimilar", {
+			artist: text,
+			autocorrect: 1,
+			limit: 5,
+			handlers: {
+				success: function(data) {
+					var charts = [];
+						for(i = 0; i < 5; i++) {
+							charts.push(data.similarartists.artist[i].name + " (" + (data.similarartists.artist[i].match*100).toFixed(2) + "% match" + ")");
+						}
+					bot.say(to, "Last.fm " + lightRed + bold + "| " + reset + "Artists similar to " + bold + text + lightRed + " | " + reset + charts.join(", "));
+				},
+				error: function(error) {
+					bot.say(to, "Last.fm " + lightRed + bold + "| " + bold + reset + bold + text + bold + " is not a valid artist on Last.fm!");
 				}
-			});
+			}
+		});
 	}
 });
