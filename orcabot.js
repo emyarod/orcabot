@@ -309,25 +309,25 @@ bot.addListener("message", function(from, to, text) {
 
 // get artist info <is truncated at ~440 characters
 
-bot.addListener("message", function(from, to, text, message) {
-	if(text.search(".getinfo ") > -1 && text.search(".getinfo ") === 0) {
-		text = text.replace(".getinfo ", "");
-		lastfm.request("artist.getInfo", {
-			artist: text,
-			autocorrect: 1,
-			handlers: {
-				success: function(data) {
-					// strip html, strip whitespace, decode entities, trim
-					var reply = entities.decode(data.artist.bio.summary);
-					bot.say(to, "Last.fm " + lightRed + bold + "| " + reset + reply.replace(/<(?:.|\n)*?>/gm, "").replace(/\s+/g, " ").trim());
-				},
-				error: function(error) {
-					bot.say(to, "Last.fm " + lightRed + bold + "| " + bold + reset + bold + text + bold + " is not a valid artist on Last.fm!");
-				}
-			}
-		});
-	}
-});
+// bot.addListener("message", function(from, to, text, message) {
+// 	if(text.search(".getinfo ") > -1 && text.search(".getinfo ") === 0) {
+// 		text = text.replace(".getinfo ", "");
+// 		lastfm.request("artist.getInfo", {
+// 			artist: text,
+// 			autocorrect: 1,
+// 			handlers: {
+// 				success: function(data) {
+// 					// strip html, strip whitespace, decode entities, trim
+// 					var reply = entities.decode(data.artist.bio.summary);
+// 					bot.say(to, "Last.fm " + lightRed + bold + "| " + reset + reply.replace(/<(?:.|\n)*?>/gm, "").replace(/\s+/g, " ").trim());
+// 				},
+// 				error: function(error) {
+// 					bot.say(to, "Last.fm " + lightRed + bold + "| " + bold + reset + bold + text + bold + " is not a valid artist on Last.fm!");
+// 				}
+// 			}
+// 		});
+// 	}
+// });
 
 // .similar
 
