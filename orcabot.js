@@ -187,15 +187,17 @@ bot.addListener("message", function(from, to, text, message) {
 bot.addListener("message", function(from, to, text, message) {
 	if(text.search(".charts ") > -1 && text.search(".charts ") === 0) {
 		text = text.replace(".charts ", "");
-		lastfm.request("user.getWeeklyArtistChart", {
+		lastfm.request("user.getTopArtists", {
 			user: text,
+			period: "7day",
+			limit: 5,
 			handlers: {
 				success: function(data) {
 					var charts = [];
 					for(i = 0; i < 5; i++) {
-						charts.push(data.weeklyartistchart.artist[i].name + " (" + data.weeklyartistchart.artist[i].playcount + ")");
+						charts.push(data.topartists.artist[i].name + " (" + data.topartists.artist[i].playcount + ")");
 					}
-					bot.say(to, "Last.fm weekly charts for " + bold + text + lightRed + " | " + reset + charts.join(", "));
+					bot.say(to, "Last.fm " + lightRed + bold + "| " + reset + "Weekly charts for " + bold + text + lightRed + " | " + reset + charts.join(", "));
 				},
 				error: function(error) {
 					bot.say(to, "Last.fm " + lightRed + bold + "| " + bold + reset + bold + text + bold + " is not a registered username on Last.fm!");
@@ -205,15 +207,17 @@ bot.addListener("message", function(from, to, text, message) {
 	} else if(text === ".charts") {
 		if(hostNames.indexOf(message.host) > -1) {
 			var lfmAccount = Object.getOwnPropertyDescriptor(hostsAndAccounts[message.host], "lfm").value;
-			lastfm.request("user.getWeeklyArtistChart", {
+			lastfm.request("user.getTopArtists", {
 				user: lfmAccount,
+				period: "7day",
+				limit: 5,
 				handlers: {
 					success: function(data) {
 						var charts = [];
 						for(i = 0; i < 5; i++) {
-							charts.push(data.weeklyartistchart.artist[i].name + " (" + data.weeklyartistchart.artist[i].playcount + ")");
+							charts.push(data.topartists.artist[i].name + " (" + data.topartists.artist[i].playcount + ")");
 						}
-						bot.say(to, "Last.fm weekly charts for " + bold + lfmAccount + lightRed + " | " + reset + charts.join(", "));
+						bot.say(to, "Last.fm " + lightRed + bold + "| " + reset + "Weekly charts for " + bold + lfmAccount + lightRed + " | " + reset + charts.join(", "));
 					},
 					error: function(error) {
 						bot.say(to, "Last.fm " + lightRed + bold + "| " + bold + reset + bold + lfmAccount + bold + " is not a registered username on Last.fm!");
