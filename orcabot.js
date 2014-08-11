@@ -360,34 +360,34 @@ bot.addListener("message", function(from, to, text, message) {
 
 // hitbox live updates
 
-http.get("http://api.hitbox.tv/media/live/channel", function(res) {
-	res.setEncoding("utf8");
-	res.on("data", function(chunk) {
-		if(chunk === "no_media_found") {return //need to restart loop from here....i think}
-		chunk = JSON.parse(chunk);
-		console.log(chunk.livestream[0].media_is_live); // 0|1 = offline|online
-		console.log(chunk.livestream[0].category_name); // name of game
-		console.log(chunk.livestream[0].media_status); // stream title
-		console.log(chunk.livestream[0].team_name); // team name, could be null
-		console.log(chunk.livestream[0].channel.user_name); // username
-		console.log(chunk.livestream[0].channel.channel_link); // channel link
-	})
-}).on("error", function(error) {
-	console.log("Got error: " + error.message);
-});
+	http.get("http://api.hitbox.tv/media/live/channel", function(res) {
+		res.setEncoding("utf8");
+		res.on("data", function(chunk) {
+			if(chunk === "no_media_found") {return /*need to restart loop from here....i think*/}
+			chunk = JSON.parse(chunk);
+			console.log(chunk.livestream[0].media_is_live); // 0|1 = offline|online
+			console.log(chunk.livestream[0].category_name); // name of game
+			console.log(chunk.livestream[0].media_status); // stream title
+			console.log(chunk.livestream[0].team_name); // team name, could be null
+			console.log(chunk.livestream[0].channel.user_name); // username
+			console.log(chunk.livestream[0].channel.channel_link); // channel link
+		})
+	}).on("error", function(error) {
+		console.log("Got error: " + error.message);
+	});
 
-var isLive;
-var sentFlag;
+	var isLive;
+	var sentFlag;
 
-while(1) {
-	if(chunk.livestream[0].media_is_live === 1) {
-		isLive = 1;
-		if(sentFlag === 0) {
-			// bot.say
-			sentFlag = 1;
+	while(1) {
+		if(chunk.livestream[0].media_is_live === 1) {
+			isLive = 1;
+			if(sentFlag === 0) {
+				// bot.say
+				sentFlag = 1;
+			}
+		} else {
+			sentFlag = 0;
 		}
-	} else {
-		sentFlag = 0;
+		// delay 60
 	}
-	// delay 60
-}
