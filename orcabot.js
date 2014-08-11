@@ -3,10 +3,13 @@ var config = require("./config");
 
 // get node modules
 var irc = require("irc");
+var Entities = require('html-entities').AllHtmlEntities;
 var twit = require("twit");
 var fs = require("fs");
 var LastFmNode = require("lastfm").LastFmNode;
 var ig = require("instagram-node").instagram();
+
+var entities = new Entities();
 
 //get modules
 
@@ -77,6 +80,32 @@ bot.addListener("message", function(from, to, text) {
 				bot.say(to, "Twitter " + cyan + bold + "| " + reset + bold + text + reset + " is not a valid Twitter handle!");
 			} else {
 				bot.say(to, "Twitter " + cyan + bold + "| " + bold + reset + "Most recent tweet by " + bold + data[0].user.name + bold + " "  + "(" + bold + "@" + data[0].user.screen_name + bold + ")" + bold + cyan + " | " + bold + reset + data[0].text + cyan + bold + " | " + bold + reset + data[0].created_at);
+			}
+		});
+	}
+});
+
+// instagram
+
+ig.use({
+	client_id: config.igClientId,
+	client_secret: config.igClientSecret
+});
+
+bot.addListener("message", function(from, to, text) {
+	if(text.search(".ig ") > -1 && text.search(".ig ") === 0) {
+		text = text.replace(".ig ", "");
+		ig.user_search(text, {count: 1}, function(err, users, limit) {
+			if(users.length > 0 && users[0].username === text) {
+				ig.user_media_recent(users[0].id, {count: 1}, function(err, medias, pagination, limit) {
+					if(medias[0].caption !== null) {
+						bot.say(to, "Instagram " + lightBlue + bold + "| " + reset + "Most recent post by " + bold + text + " (" + medias[0].user.full_name + ")" + lightBlue + " | " + reset + medias[0].caption.text + " " + (medias[0].link).replace("instagram.com", "instagr.am") + lightBlue + bold + " | " + reset + "Filter: " + medias[0].filter);
+					} else {
+						bot.say(to, "Instagram " + lightBlue + bold + "| " + reset + "Most recent post by " + bold + text + " (" + medias[0].user.full_name + ")" + lightBlue + " | " + reset + "No caption " + (medias[0].link).replace("instagram.com", "instagr.am") + lightBlue + bold + " | " + reset + "Filter: " + medias[0].filter);
+					}
+				});
+			} else {
+				bot.say(to, "Instagram " + lightBlue + bold + "| " + bold + reset + bold + text + bold + " is not a registered user on Instagram!");
 			}
 		});
 	}
@@ -278,28 +307,50 @@ bot.addListener("message", function(from, to, text) {
 	}
 });
 
-// instagram
+// get artist info <is truncated at ~440 characters
 
-ig.use({
-	client_id: config.igClientId,
-	client_secret: config.igClientSecret
-});
-
-bot.addListener("message", function(from, to, text) {
-	if(text.search(".ig ") > -1 && text.search(".ig ") === 0) {
-		text = text.replace(".ig ", "");
-		ig.user_search(text, {count: 1}, function(err, users, limit) {
-			if(users.length > 0 && users[0].username === text) {
-				ig.user_media_recent(users[0].id, {count: 1}, function(err, medias, pagination, limit) {
-					if(medias[0].caption !== null) {
-						bot.say(to, "Instagram " + lightBlue + bold + "| " + reset + "Most recent post by " + bold + text + " (" + medias[0].user.full_name + ")" + lightBlue + " | " + reset + medias[0].caption.text + " " + (medias[0].link).replace("instagram.com", "instagr.am") + lightBlue + bold + " | " + reset + "Filter: " + medias[0].filter);
-					} else {
-						bot.say(to, "Instagram " + lightBlue + bold + "| " + reset + "Most recent post by " + bold + text + " (" + medias[0].user.full_name + ")" + lightBlue + " | " + reset + "No caption " + (medias[0].link).replace("instagram.com", "instagr.am") + lightBlue + bold + " | " + reset + "Filter: " + medias[0].filter);
-					}
-				});
-			} else {
-				bot.say(to, "Instagram " + lightBlue + bold + "| " + bold + reset + bold + text + bold + " is not a registered user on Instagram!");
+bot.addListener("message", function(from, to, text, message) {
+	if(text.search(".getinfo ") > -1 && text.search(".getinfo ") === 0) {
+		text = text.replace(".getinfo ", "");
+		lastfm.request("artist.getInfo", {
+			artist: text,
+			autocorrect: 1,
+			handlers: {
+				success: function(data) {
+					// strip html, strip whitespace, decode entities, trim
+					var reply = entities.decode(data.artist.bio.summary);
+					bot.say(to, "Last.fm " + lightRed + bold + "| " + reset + reply.replace(/<(?:.|\n)*?>/gm, "").replace(/\s+/g, " ").trim());
+					console.log((reply.replace(/<(?:.|\n)*?>/gm, "").replace(/\s+/g, " ").trim()));
+				},
+				error: function(error) {
+					bot.say(to, "Last.fm " + lightRed + bold + "| " + bold + reset + bold + text + bold + " is not a valid artist on Last.fm!");
+				}
 			}
 		});
+	}
+});
+
+// .similar
+
+bot.addListener("message", function(from, to, text, message) {
+	if(text.search(".similar ") > -1 && text.search(".similar ") === 0) {
+		text = text.replace(".similar ", "");
+			lastfm.request("artist.getSimilar", {
+				artist: text,
+				autocorrect: 1,
+				limit: 5,
+				handlers: {
+					success: function(data) {
+						var charts = [];
+							for(i = 0; i < 5; i++) {
+								charts.push(data.similarartists.artist[i].name + " (" + (data.similarartists.artist[i].match*100).toFixed(2) + "% match" + ")");
+							}
+						bot.say(to, "Last.fm " + lightRed + bold + "| " + reset + "Artists similar to " + bold + text + lightRed + " | " + reset + charts.join(", "));
+					},
+					error: function(error) {
+						bot.say(to, "Last.fm " + lightRed + bold + "| " + bold + reset + bold + text + bold + " is not a valid artist on Last.fm!");
+					}
+				}
+			});
 	}
 });
