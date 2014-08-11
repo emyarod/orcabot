@@ -375,3 +375,19 @@ http.get("http://api.hitbox.tv/media/live/channel", function(res) {
 }).on("error", function(error) {
 	console.log("Got error: " + error.message);
 });
+
+var isLive;
+var sentFlag;
+
+while(1) {
+	if(chunk.livestream[0].media_is_live === 1) {
+		isLive = 1;
+		if(sentFlag === 0) {
+			// bot.say
+			sentFlag = 1;
+		}
+	} else {
+		sentFlag = 0;
+	}
+	// delay 60
+}
