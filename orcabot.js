@@ -6,6 +6,7 @@ var irc = require("irc");
 var Entities = require('html-entities').AllHtmlEntities;
 var twit = require("twit");
 var fs = require("fs");
+var http = require("http");
 var LastFmNode = require("lastfm").LastFmNode;
 var ig = require("instagram-node").instagram();
 
@@ -352,4 +353,25 @@ bot.addListener("message", function(from, to, text, message) {
 			}
 		});
 	}
+});
+
+
+
+
+// hitbox live updates
+
+http.get("http://api.hitbox.tv/media/live/channel", function(res) {
+	res.setEncoding("utf8");
+	res.on("data", function(chunk) {
+		if(chunk === "no_media_found") {return //need to restart loop from here....i think}
+		chunk = JSON.parse(chunk);
+		console.log(chunk.livestream[0].media_is_live); // 0|1 = offline|online
+		console.log(chunk.livestream[0].category_name); // name of game
+		console.log(chunk.livestream[0].media_status); // stream title
+		console.log(chunk.livestream[0].team_name); // team name, could be null
+		console.log(chunk.livestream[0].channel.user_name); // username
+		console.log(chunk.livestream[0].channel.channel_link); // channel link
+	})
+}).on("error", function(error) {
+	console.log("Got error: " + error.message);
 });
