@@ -60,25 +60,25 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 		    	bot.irc.privmsg(message.target, "not 100%");
 		    	break;
 	    	case (text === "tw"):
-		    	bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Twitter module!" + bold + "Usage: " + reset + ".tw <username> will return the most recent tweet by <username>.");
+		    	bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Twitter module!" + bold + " Usage: " + reset + ".tw <username> will return the most recent tweet by <username>.");
 		    	break;
 	    	case (text === "ig"):
-		    	bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Instagram module!" + bold + "Usage: " + reset + ".ig <username> will return the most recent photo/video by <username>, along with the caption and filter used (if applicable).");
+		    	bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Instagram module!" + bold + " Usage: " + reset + ".ig <username> will return the most recent photo/video by <username>, along with the caption and filter used (if applicable).");
 		    	break;
 	    	case (text === "np"):
-	    		bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Last.fm module!" + bold + "Usage: " + reset + ".np (with no other parameters) returns your currently playing or most recently scrobbled track on last.fm (you must be in the bot's database for this function to work!). Entering .np <username> returns the currently playing or most recently scrobbled track for <username> on last.fm.");
+	    		bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Last.fm module!" + bold + " Usage: " + reset + ".np (with no other parameters) returns your currently playing or most recently scrobbled track on last.fm (you must be in the bot's database for this function to work!). Entering .np <username> returns the currently playing or most recently scrobbled track for <username> on last.fm.");
 	    		break;
     		case (text === "charts"):
-	    		bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Last.fm module!" + bold + "Usage: " + reset + ".charts (with no other parameters) returns your top five most played artists in the last seven days on last.fm (you must be in the bot's database for this function to work!). Entering .charts <username> returns the top five most played artists in the last seven days for <username> on last.fm.");
+	    		bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Last.fm module!" + bold + " Usage: " + reset + ".charts (with no other parameters) returns your top five most played artists in the last seven days on last.fm (you must be in the bot's database for this function to work!). Entering .charts <username> returns the top five most played artists in the last seven days for <username> on last.fm.");
 	    		break;
     		case (text === "addlastfm"):
-	    		bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Last.fm module!" + bold + "Usage: " + reset + ".addlastfm <username> stores your hostname and current IRC handle in the bot's database for usage with the .np, .charts, and .compare commands. You must be identified/authenticated on Snoonet for this feature to be of any significant usefulness.");
+	    		bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Last.fm module!" + bold + " Usage: " + reset + ".addlastfm <username> stores your hostname and current IRC handle in the bot's database for usage with the .np, .charts, and .compare commands. You must be identified/authenticated on Snoonet for this feature to be of any significant usefulness.");
 	    		break;
     		case (text === "compare"):
-	    		bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Last.fm module!" + bold + "Usage: " + reset + ".compare <username> calculates your musical compatibility with <username> using the last.fm tasteometer.");
+	    		bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Last.fm module!" + bold + " Usage: " + reset + ".compare <username> calculates your musical compatibility with <username> using the last.fm tasteometer.");
 	    		break;
 			case (text === "similar"):
-	    		bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Last.fm module!" + bold + "Usage: " + reset + ".similar <artist> returns a list of similar artists and a percentage value of how closely the artists match, according to last.fm.");
+	    		bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Last.fm module!" + bold + " Usage: " + reset + ".similar <artist> returns a list of similar artists and a percentage value of how closely the artists match, according to last.fm.");
 	    		break;
 		  	default:
 		    	bot.irc.privmsg(message.target, text + " is not a valid command!");
