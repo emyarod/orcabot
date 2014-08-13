@@ -52,9 +52,37 @@ var underline = "\u001f";
 
 api.hookEvent("orcatail", "privmsg", function(message) {
 	if(message.message === ".help") {
-		bot.irc.privmsg(message.target, "Available commands: g, tw, ig, np, charts, addlastfm, compare, similar. Type \".help <command>\" for more information about a command");
+		bot.irc.privmsg(message.target, "Available commands: g, tw, ig, np, charts, addlastfm, compare, similar. Type \".help <command>\" for more information about a command!");
 	} else if((message.message).search(".help ") === 0) {
 		var text = (message.message).replace(".help ", "");
+		switch(true) {
+		  	case (text === "g"):
+		    	bot.irc.privmsg(message.target, "not 100%");
+		    	break;
+	    	case (text === "tw"):
+		    	bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Twitter module!" + bold + "Usage: " + reset + ".tw <username> will return the most recent tweet by <username>.");
+		    	break;
+	    	case (text === "ig"):
+		    	bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Instagram module!" + bold + "Usage: " + reset + ".ig <username> will return the most recent photo/video by <username>, along with the caption and filter used (if applicable).");
+		    	break;
+	    	case (text === "np"):
+	    		bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Last.fm module!" + bold + "Usage: " + reset + ".np (with no other parameters) returns your currently playing or most recently scrobbled track on last.fm (you must be in the bot's database for this function to work!). Entering .np <username> returns the currently playing or most recently scrobbled track for <username> on last.fm.");
+	    		break;
+    		case (text === "charts"):
+	    		bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Last.fm module!" + bold + "Usage: " + reset + ".charts (with no other parameters) returns your top five most played artists in the last seven days on last.fm (you must be in the bot's database for this function to work!). Entering .charts <username> returns the top five most played artists in the last seven days for <username> on last.fm.");
+	    		break;
+    		case (text === "addlastfm"):
+	    		bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Last.fm module!" + bold + "Usage: " + reset + ".addlastfm <username> stores your hostname and current IRC handle in the bot's database for usage with the .np, .charts, and .compare commands. You must be identified/authenticated on Snoonet for this feature to be of any significant usefulness.");
+	    		break;
+    		case (text === "compare"):
+	    		bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Last.fm module!" + bold + "Usage: " + reset + ".compare <username> calculates your musical compatibility with <username> using the last.fm tasteometer.");
+	    		break;
+			case (text === "similar"):
+	    		bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Last.fm module!" + bold + "Usage: " + reset + ".similar <artist> returns a list of similar artists and a percentage value of how closely the artists match, according to last.fm.");
+	    		break;
+		  	default:
+		    	bot.irc.privmsg(message.target, text + " is not a valid command!");
+		}
 	}
 });
 
@@ -288,7 +316,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 			handlers: {
 				success: function(data) {
 					var score = (data.comparison.result.score*100).toFixed(2);
-					var adjective;
+					var adjective = "";
 					switch(true) {
 					  	case (score >= 90):
 					    	adjective = "SUPER";
@@ -307,6 +335,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 				    		break;
 					  	default:
 					    	adjective = "VERY LOW";
+					    	break;
 					}
 					if((data.comparison.result.artists.artist).length < 5) {
 							var x = (data.comparison.result.artists.artist).length;
@@ -351,7 +380,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 // .similar
 api.hookEvent("orcatail", "privmsg", function(message) {
 	if((message.message).search(".similar ") === 0) {
-		text = (message.message).replace(".similar ", "");
+		var text = (message.message).replace(".similar ", "");
 		lastfm.request("artist.getSimilar", {
 			artist: text,
 			autocorrect: 1,
@@ -364,7 +393,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 							x = 5;
 						}
 					var charts = [];
-						for(i = 0; i < 5; i++) {
+						for(i = 0; i < x; i++) {
 							charts.push(data.similarartists.artist[i].name + " (" + (data.similarartists.artist[i].match*100).toFixed(2) + "% match" + ")");
 						}
 					bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + "Artists similar to " + bold + text + lightRed + " | " + reset + charts.join(", "));
