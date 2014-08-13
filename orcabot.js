@@ -1,48 +1,34 @@
-// configure bot
+// get config files
 var config = require("./config");
+var channel = require("./channel");
+var keys = require("./opendoors");
 
 // get node modules
-var irc = require("irc");
-var Entities = require('html-entities').AllHtmlEntities;
-var twit = require("twit");
 var fs = require("fs");
 var http = require("http");
+var factory = require("irc-factory"),
+    api = new factory.Api();
+var Entities = require('html-entities').AllHtmlEntities;
+var twit = require("twit");
 var LastFmNode = require("lastfm").LastFmNode;
 var ig = require("instagram-node").instagram();
 
 var entities = new Entities();
 
-//get modules
-
 // bot name
-var bot = new irc.Client(config.server, config.botName, {
-	channels: config.channels,
-	userName: config.botName,
-	realName: config.realName,
-	password: config.password
+var bot = api.createClient("orcatail", {
+    nick: config.nick,
+    user: config.user,
+    realname: config.realname,
+    server: config.server,
+    password: config.password
 });
 
-// greeting
-
-bot.addListener("message", function(from, to, text) {
-    if(text.indexOf("hi") > -1) {
-    	bot.say(to, "(⊙ ◡ ⊙)");
-	}
-});
-
-// google
-
-bot.addListener("message", function(from, to, text) {
-	if(text.search(".g ") > -1 && text.search(".g ") === 0) {
-		text = text.replace(".g ", "");
-		text = text.replace(/ /g, "+");
-		var searchLink = "https://google.com/search?q=" + text;
-		bot.say(to, searchLink);
-	}
+api.hookEvent("orcatail", "registered", function(message) {
+    bot.irc.join(channel.channels);
 });
 
 // bot response formatting
-
 var white = "\u000300";
 var black = "\u000301";
 var darkBlue = "\u000302";
@@ -64,59 +50,80 @@ var bold = "\u0002";
 var reset = "\u000f";
 var underline = "\u001f";
 
-// twitter
-
-var t = new twit({
-	consumer_key: config.twitterConsumerKey,
-	consumer_secret: config.twitterConsumerSecret,
-	access_token: config.twitterAccessToken,
-	access_token_secret: config.twitterAccessTokenSecret,
+api.hookEvent("orcatail", "privmsg", function(message) {
+	if(message.message === ".help") {
+		bot.irc.privmsg(message.target, "Available commands: g, tw, ig, np, charts, addlastfm, compare, similar. Type \".help <command>\" for more information about a command");
+	} else if((message.message).search(".help ") === 0) {
+		var text = (message.message).replace(".help ", "");
+	}
 });
 
-bot.addListener("message", function(from, to, text) {
-	if(text.search(".tw ") > -1 && text.search(".tw ") === 0) {
-		text = text.replace(".tw ", "");
+// greeting
+api.hookEvent("orcatail", "privmsg", function(message) {
+	if((message.message).indexOf("hi") > -1) {
+		bot.irc.privmsg(message.target, "(⊙ ◡ ⊙)");
+	}
+});
+
+// google
+api.hookEvent("orcatail", "privmsg", function(message) {
+	if((message.message).search(".g ") === 0) {
+		var text = (message.message).replace(".g ", "").replace(/ /g, "+");
+		var searchLink = "https://google.com/search?q=" + text;
+		bot.irc.privmsg(message.target, searchLink);
+	}
+});
+
+// twitter
+var t = new twit({
+	consumer_key: keys.twitterConsumerKey,
+	consumer_secret: keys.twitterConsumerSecret,
+	access_token: keys.twitterAccessToken,
+	access_token_secret: keys.twitterAccessTokenSecret
+});
+
+api.hookEvent("orcatail", "privmsg", function(message) {
+	if((message.message).search(".tw ") === 0) {
+		var text = (message.message).replace(".tw ", "");
 		t.get("statuses/user_timeline", {screen_name: text, count: 1}, function (err, data, response) {
 			if(data === undefined) {
-				bot.say(to, "Twitter " + cyan + bold + "| " + reset + bold + text + reset + " is not a valid Twitter handle!");
+				bot.irc.privmsg(message.target, "Twitter " + cyan + bold + "| " + reset + bold + text + reset + " is not a valid Twitter handle!");
 			} else {
-				bot.say(to, "Twitter " + cyan + bold + "| " + bold + reset + "Most recent tweet by " + bold + data[0].user.name + bold + " "  + "(" + bold + "@" + data[0].user.screen_name + bold + ")" + bold + cyan + " | " + bold + reset + data[0].text + cyan + bold + " | " + bold + reset + data[0].created_at);
+				bot.irc.privmsg(message.target, "Twitter " + cyan + bold + "| " + bold + reset + "Most recent tweet by " + bold + data[0].user.name + bold + " "  + "(" + bold + "@" + data[0].user.screen_name + bold + ")" + bold + cyan + " | " + bold + reset + data[0].text + cyan + bold + " | " + bold + reset + data[0].created_at);
 			}
 		});
 	}
 });
 
 // instagram
-
 ig.use({
-	client_id: config.igClientId,
-	client_secret: config.igClientSecret
+	client_id: keys.igClientId,
+	client_secret: keys.igClientSecret
 });
 
-bot.addListener("message", function(from, to, text) {
-	if(text.search(".ig ") > -1 && text.search(".ig ") === 0) {
-		text = text.replace(".ig ", "");
+api.hookEvent("orcatail", "privmsg", function(message) {
+	if((message.message).search(".ig ") === 0) {
+		var text = (message.message).replace(".ig ", "");
 		ig.user_search(text, {count: 1}, function(err, users, limit) {
 			if(users.length > 0 && users[0].username === text) {
 				ig.user_media_recent(users[0].id, {count: 1}, function(err, medias, pagination, limit) {
 					if(medias[0].caption !== null) {
-						bot.say(to, "Instagram " + lightBlue + bold + "| " + reset + "Most recent post by " + bold + text + " (" + medias[0].user.full_name + ")" + lightBlue + " | " + reset + medias[0].caption.text + " " + (medias[0].link).replace("instagram.com", "instagr.am") + lightBlue + bold + " | " + reset + "Filter: " + medias[0].filter);
+						bot.irc.privmsg(message.target, "Instagram " + lightBlue + bold + "| " + reset + "Most recent post by " + bold + text + " (" + medias[0].user.full_name + ")" + lightBlue + " | " + reset + medias[0].caption.text + " " + (medias[0].link).replace("instagram.com", "instagr.am") + lightBlue + bold + " | " + reset + "Filter: " + medias[0].filter);
 					} else {
-						bot.say(to, "Instagram " + lightBlue + bold + "| " + reset + "Most recent post by " + bold + text + " (" + medias[0].user.full_name + ")" + lightBlue + " | " + reset + "No caption " + (medias[0].link).replace("instagram.com", "instagr.am") + lightBlue + bold + " | " + reset + "Filter: " + medias[0].filter);
+						bot.irc.privmsg(message.target, "Instagram " + lightBlue + bold + "| " + reset + "Most recent post by " + bold + text + " (" + medias[0].user.full_name + ")" + lightBlue + " | " + reset + "No caption " + (medias[0].link).replace("instagram.com", "instagr.am") + lightBlue + bold + " | " + reset + "Filter: " + medias[0].filter);
 					}
 				});
 			} else {
-				bot.say(to, "Instagram " + lightBlue + bold + "| " + bold + reset + bold + text + bold + " is not a registered user on Instagram!");
+				bot.irc.privmsg(message.target, "Instagram " + lightBlue + bold + "| " + bold + reset + bold + text + bold + " is not a registered user on Instagram!");
 			}
 		});
 	}
 });
 
 // last.fm
-
 var lastfm = new LastFmNode({
-	api_key: config.lfmApiKey,
-	secret: config.lfmSecret
+	api_key: keys.lfmApiKey,
+	secret: keys.lfmSecret
 });
 
 var lastfmdb = "./lastfmdb.json";
@@ -129,26 +136,26 @@ fs.readFile(lastfmdb, "utf8", function(err, data) {
 	hostNames = Object.keys(hostsAndAccounts);
 });
 
-bot.addListener("message", function(from, to, text, message) {
-	if(text.search(".addlastfm ") > -1 && text.search(".addlastfm ") === 0) {
-		text = text.replace(".addlastfm ", "");
+api.hookEvent("orcatail", "privmsg", function(message) {
+	if((message.message).search(".addlastfm ") === 0) {
+		var text = (message.message).replace(".addlastfm ", "");
 		lastfm.request("user.getInfo", {
 			user: text,
 			handlers: {
 				success: function(data) {
-						if(hostNames.indexOf(message.host) > -1) {
-							bot.say(to, "Last.fm " + lightRed + bold + "| " + reset + bold + from + bold + " (" + message.host + ")" + " already has an associated Last.fm account (http://www.last.fm/user/" + Object.getOwnPropertyDescriptor(hostsAndAccounts[message.host], "lfm").value + reset + ")!");
+						if(hostNames.indexOf(message.hostname) > -1) {
+							bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + bold + message.nickname + bold + " (" + message.hostname + ")" + " already has an associated Last.fm account (http://www.last.fm/user/" + Object.getOwnPropertyDescriptor(hostsAndAccounts[message.hostname], "lfm").value + reset + ")!");
 						} else {
-							hostsAndAccounts[message.host] = {"lfm": text};
+							hostsAndAccounts[message.hostname] = {"lfm": text};
 							fs.writeFile(lastfmdb, JSON.stringify(hostsAndAccounts, null, 4), function (err) {
 								if(err) throw err;
 								hostNames = Object.keys(hostsAndAccounts);
 							});
-							bot.say(to, "Last.fm " + lightRed + bold + "| " + reset + "User " + bold + text + bold + reset + " is now associated with hostname " + bold + message.host);
+							bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + "User " + bold + text + bold + reset + " is now associated with hostname " + bold + message.hostname);
 						}
 				},
 				error: function(error) {
-					bot.say(to, "Last.fm " + lightRed + bold + "| " + bold + reset + bold + text + bold + " is not a registered username on Last.fm!");
+					bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + bold + reset + bold + text + bold + " is not a registered username on Last.fm!");
 				}
 			}
 		});
@@ -156,67 +163,65 @@ bot.addListener("message", function(from, to, text, message) {
 });
 
 // now playing .np <self/user/registered handle>
-
-bot.addListener("message", function(from, to, text, message) {
-	if(text.search(".np ") > -1 && text.search(".np ") === 0) {
-		text = text.replace(".np ", "");
+api.hookEvent("orcatail", "privmsg", function(message) {
+	if((message.message).search(".np ") === 0) {
+		var text = (message.message).replace(".np ", "");
 		lastfm.request("user.getRecentTracks", {
 			user: text,
 			handlers: {
 				success: function(data) {
 					if(data.recenttracks.track[0]["@attr"] === undefined) {
 						if(data.recenttracks.track[0].album['#text'] !== "") {
-							bot.say(to, "Last.fm " + lightRed + bold + "| " + reset + bold + text + reset + " last listened to " + "\"" + data.recenttracks.track[0].name + "\"" + " by " + data.recenttracks.track[0].artist["#text"] + " from " + underline + data.recenttracks.track[0].album["#text"] + underline + lightRed + bold + " | " + reset + "http://www.last.fm/user/" + text + "/now");
+							bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + bold + text + reset + " last listened to " + "\"" + data.recenttracks.track[0].name + "\"" + " by " + data.recenttracks.track[0].artist["#text"] + " from " + underline + data.recenttracks.track[0].album["#text"] + underline + lightRed + bold + " | " + reset + "http://www.last.fm/user/" + text + "/now");
 						} else {
-							bot.say(to, "Last.fm " + lightRed + bold + "| " + reset + bold + text + reset + " last listened to " + "\"" + data.recenttracks.track[0].name + "\"" + " by " + data.recenttracks.track[0].artist["#text"] + lightRed + bold + " | " + reset + "http://www.last.fm/user/" + text + "/now");
+							bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + bold + text + reset + " last listened to " + "\"" + data.recenttracks.track[0].name + "\"" + " by " + data.recenttracks.track[0].artist["#text"] + lightRed + bold + " | " + reset + "http://www.last.fm/user/" + text + "/now");
 						}
 					} else if(data.recenttracks.track[0].album['#text'] !== "") {
-						bot.say(to, "Last.fm " + lightRed + bold + "| " + reset + bold + text + reset + " is listening to " + "\"" + data.recenttracks.track[0].name + "\"" + " by " + data.recenttracks.track[0].artist["#text"] + " from " + underline + data.recenttracks.track[0].album["#text"] + underline + lightRed + bold + " | " + reset + "http://www.last.fm/user/" + text + "/now");
+						bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + bold + text + reset + " is listening to " + "\"" + data.recenttracks.track[0].name + "\"" + " by " + data.recenttracks.track[0].artist["#text"] + " from " + underline + data.recenttracks.track[0].album["#text"] + underline + lightRed + bold + " | " + reset + "http://www.last.fm/user/" + text + "/now");
 					} else {
-						bot.say(to, "Last.fm " + lightRed + bold + "| " + reset + bold + text + reset + " is listening to " + "\"" + data.recenttracks.track[0].name + "\"" + " by " + data.recenttracks.track[0].artist["#text"] + lightRed + bold + " | " + reset + "http://www.last.fm/user/" + text + "/now");
+						bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + bold + text + reset + " is listening to " + "\"" + data.recenttracks.track[0].name + "\"" + " by " + data.recenttracks.track[0].artist["#text"] + lightRed + bold + " | " + reset + "http://www.last.fm/user/" + text + "/now");
 					}
 				},
 				error: function(error) {
-					bot.say(to, "Last.fm " + lightRed + bold + "| " + bold + reset + bold + text + bold + " is not a registered username on Last.fm!");
+					bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + bold + reset + bold + text + bold + " is not a registered username on Last.fm!");
 				}
 			}
 		});
-	} else if(text === ".np") {
-		if(hostNames.indexOf(message.host) > -1) {
-			var lfmAccount = Object.getOwnPropertyDescriptor(hostsAndAccounts[message.host], "lfm").value;
+	} else if(message.message === ".np") {
+		if(hostNames.indexOf(message.hostname) > -1) {
+			var lfmAccount = Object.getOwnPropertyDescriptor(hostsAndAccounts[message.hostname], "lfm").value;
 			lastfm.request("user.getRecentTracks", {
 				user: lfmAccount,
 				handlers: {
 					success: function(data) {
 						if(data.recenttracks.track[0]["@attr"] === undefined) {
 							if(data.recenttracks.track[0].album['#text'] !== "") {
-								bot.say(to, "Last.fm " + lightRed + bold + "| " + reset + bold + lfmAccount + reset + " last listened to " + "\"" + data.recenttracks.track[0].name + "\"" + " by " + data.recenttracks.track[0].artist["#text"] + " from " + underline + data.recenttracks.track[0].album["#text"] + underline + lightRed + bold + " | " + reset + "http://www.last.fm/user/" + lfmAccount + "/now");
+								bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + bold + lfmAccount + reset + " last listened to " + "\"" + data.recenttracks.track[0].name + "\"" + " by " + data.recenttracks.track[0].artist["#text"] + " from " + underline + data.recenttracks.track[0].album["#text"] + underline + lightRed + bold + " | " + reset + "http://www.last.fm/user/" + lfmAccount + "/now");
 							} else {
-								bot.say(to, "Last.fm " + lightRed + bold + "| " + reset + bold + lfmAccount + reset + " last listened to " + "\"" + data.recenttracks.track[0].name + "\"" + " by " + data.recenttracks.track[0].artist["#text"] + lightRed + bold + " | " + reset + "http://www.last.fm/user/" + lfmAccount + "/now");
+								bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + bold + lfmAccount + reset + " last listened to " + "\"" + data.recenttracks.track[0].name + "\"" + " by " + data.recenttracks.track[0].artist["#text"] + lightRed + bold + " | " + reset + "http://www.last.fm/user/" + lfmAccount + "/now");
 							}
 						} else if(data.recenttracks.track[0].album['#text'] !== "") {
-							bot.say(to, "Last.fm " + lightRed + bold + "| " + reset + bold + lfmAccount + reset + " is listening to " + "\"" + data.recenttracks.track[0].name + "\"" + " by " + data.recenttracks.track[0].artist["#text"] + " from " + underline + data.recenttracks.track[0].album["#text"] + underline + lightRed + bold + " | " + reset + "http://www.last.fm/user/" + lfmAccount + "/now");
+							bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + bold + lfmAccount + reset + " is listening to " + "\"" + data.recenttracks.track[0].name + "\"" + " by " + data.recenttracks.track[0].artist["#text"] + " from " + underline + data.recenttracks.track[0].album["#text"] + underline + lightRed + bold + " | " + reset + "http://www.last.fm/user/" + lfmAccount + "/now");
 						} else {
-							bot.say(to, "Last.fm " + lightRed + bold + "| " + reset + bold + lfmAccount + reset + " is listening to " + "\"" + data.recenttracks.track[0].name + "\"" + " by " + data.recenttracks.track[0].artist["#text"] + lightRed + bold + " | " + reset + "http://www.last.fm/user/" + lfmAccount + "/now");
+							bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + bold + lfmAccount + reset + " is listening to " + "\"" + data.recenttracks.track[0].name + "\"" + " by " + data.recenttracks.track[0].artist["#text"] + lightRed + bold + " | " + reset + "http://www.last.fm/user/" + lfmAccount + "/now");
 						}
 				},
 					error: function(error) {
-						bot.say(to, "Last.fm " + lightRed + bold + "| " + bold + text + bold + " is not a registered username on Last.fm!");
+						bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + bold + text + bold + " is not a registered username on Last.fm!");
 					}
 				}
 			});
 		} else {
-			lfmAccount = from;
-			bot.say(to, "Last.fm " + lightRed + bold + "| " + reset + bold + lfmAccount + bold + " doesn't exist in my database! Please use " + "\"" + ".addlastfm <last.fm username>" + "\"" + " to add yourself the db. You must be identified on " + config.server + ".");
+			lfmAccount = message.nickname;
+			bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + bold + lfmAccount + bold + " doesn't exist in my database! Please use " + "\"" + ".addlastfm <last.fm username>" + "\"" + " to add yourself the db. You must be identified on " + config.server + ".");
 		}
 	}
 });
 
 // weekly charts .charts <self/user/registered handle>
-
-bot.addListener("message", function(from, to, text, message) {
-	if(text.search(".charts ") > -1 && text.search(".charts ") === 0) {
-		text = text.replace(".charts ", "");
+api.hookEvent("orcatail", "privmsg", function(message) {
+	if((message.message).search(".charts ") === 0) {
+		var text = (message.message).replace(".charts ", "");
 		lastfm.request("user.getTopArtists", {
 			user: text,
 			period: "7day",
@@ -224,19 +229,24 @@ bot.addListener("message", function(from, to, text, message) {
 			handlers: {
 				success: function(data) {
 					var charts = [];
-					for(i = 0; i < 5; i++) {
+					if((data.topartists.artist).length < 5) {
+						var x = (data.topartists.artist).length;
+					} else {
+						x = 5;
+					}
+					for(i = 0; i < x; i++) {
 						charts.push(data.topartists.artist[i].name + " (" + data.topartists.artist[i].playcount + ")");
 					}
-					bot.say(to, "Last.fm " + lightRed + bold + "| " + reset + "Weekly charts for " + bold + text + lightRed + " | " + reset + charts.join(", "));
+					bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + "Weekly charts for " + bold + text + lightRed + " | " + reset + charts.join(", "));
 				},
 				error: function(error) {
-					bot.say(to, "Last.fm " + lightRed + bold + "| " + bold + reset + bold + text + bold + " is not a registered username on Last.fm!");
+					bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + bold + reset + bold + text + bold + " is not a registered username on Last.fm!");
 				}
 			}
 		});
-	} else if(text === ".charts") {
-		if(hostNames.indexOf(message.host) > -1) {
-			var lfmAccount = Object.getOwnPropertyDescriptor(hostsAndAccounts[message.host], "lfm").value;
+	} else if((message.message) === ".charts") {
+		if(hostNames.indexOf(message.hostname) > -1) {
+			var lfmAccount = Object.getOwnPropertyDescriptor(hostsAndAccounts[message.hostname], "lfm").value;
 			lastfm.request("user.getTopArtists", {
 				user: lfmAccount,
 				period: "7day",
@@ -244,31 +254,35 @@ bot.addListener("message", function(from, to, text, message) {
 				handlers: {
 					success: function(data) {
 						var charts = [];
-						for(i = 0; i < 5; i++) {
+						if((data.topartists.artist).length < 5) {
+							var x = (data.topartists.artist).length;
+						} else {
+							x = 5;
+						}
+						for(i = 0; i < x; i++) {
 							charts.push(data.topartists.artist[i].name + " (" + data.topartists.artist[i].playcount + ")");
 						}
-						bot.say(to, "Last.fm " + lightRed + bold + "| " + reset + "Weekly charts for " + bold + lfmAccount + lightRed + " | " + reset + charts.join(", "));
+						bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + "Weekly charts for " + bold + lfmAccount + lightRed + " | " + reset + charts.join(", "));
 					},
 					error: function(error) {
-						bot.say(to, "Last.fm " + lightRed + bold + "| " + bold + reset + bold + lfmAccount + bold + " is not a registered username on Last.fm!");
+						bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + bold + reset + bold + lfmAccount + bold + " is not a registered username on Last.fm!");
 					}
 				}
 			});
 		} else {
-			lfmAccount = from;
-			bot.say(to, "Last.fm " + lightRed + bold + "| " + reset + bold + lfmAccount + bold + " doesn't exist in my database! Please use " + "\"" + ".addlastfm <last.fm username>" + "\"" + " to add yourself the db. You must be identified on " + config.server + ".");
+			lfmAccount = message.nickname;
+			bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + bold + lfmAccount + bold + " doesn't exist in my database! Please use " + "\"" + ".addlastfm <last.fm username>" + "\"" + " to add yourself the db. You must be identified on " + config.server + ".");
 		}
 	}
 });
 
 // compare musical compatibility .compare <user/registered handle>
-
-bot.addListener("message", function(from, to, text) {
-	if(text.search(".compare ") > -1 && text.search(".compare ") === 0) {
-		text = text.replace(".compare ", "");
+api.hookEvent("orcatail", "privmsg", function(message) {
+	if((message.message).search(".compare ") === 0) {
+		var text = (message.message).replace(".compare ", "");
 		lastfm.request("tasteometer.compare", {
 			type1: "user",
-			value1: from,
+			value1: message.nickname,
 			type2: "user",
 			value2: text,
 			handlers: {
@@ -294,14 +308,19 @@ bot.addListener("message", function(from, to, text) {
 					  	default:
 					    	adjective = "VERY LOW";
 					}
+					if((data.comparison.result.artists.artist).length < 5) {
+							var x = (data.comparison.result.artists.artist).length;
+						} else {
+							x = 5;
+						}
 					var similarArtists = [];
-					for(i = 0; i < 5; i++) {
+					for(i = 0; i < x; i++) {
 						similarArtists.push(data.comparison.result.artists.artist[i].name);
 					}
-					bot.say(to, "Last.fm" + bold + lightRed + " | " + bold + reset + "Users " + from + " and " + text + " have " + bold + adjective + reset + " compatibility (similarity " + score + "%)" + darkRed + bold + " | " + reset + "Similar artists include: " + similarArtists.join(", "));
+					bot.irc.privmsg(message.target, "Last.fm" + bold + lightRed + " | " + bold + reset + "Users " + message.nickname + " and " + text + " have " + bold + adjective + reset + " compatibility (similarity " + score + "%)" + darkRed + bold + " | " + reset + "Similar artists include: " + similarArtists.join(", "));
 				},
 				error: function(error) {
-					bot.say(to, "Last.fm " + lightRed + bold + "| " + bold + reset + bold + text + bold + " is not a registered username on Last.fm!");
+					bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + bold + reset + "Either " + bold + message.nickname + reset + " or " + bold + text + bold + " is not a registered username on Last.fm!");
 				}
 			}
 		});
@@ -309,10 +328,9 @@ bot.addListener("message", function(from, to, text) {
 });
 
 // get artist info <is truncated at ~440 characters
-
-// bot.addListener("message", function(from, to, text, message) {
-// 	if(text.search(".getinfo ") > -1 && text.search(".getinfo ") === 0) {
-// 		text = text.replace(".getinfo ", "");
+// api.hookEvent("orcatail", "privmsg", function(message) {
+// 	if((message.message).search(".getinfo ") === 0) {
+// 		text = (message.message).replace(".getinfo ", "");
 // 		lastfm.request("artist.getInfo", {
 // 			artist: text,
 // 			autocorrect: 1,
@@ -320,10 +338,10 @@ bot.addListener("message", function(from, to, text) {
 // 				success: function(data) {
 // 					// strip html, strip whitespace, decode entities, trim
 // 					var reply = entities.decode(data.artist.bio.summary);
-// 					bot.say(to, "Last.fm " + lightRed + bold + "| " + reset + reply.replace(/<(?:.|\n)*?>/gm, "").replace(/\s+/g, " ").trim());
+// 					bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + reply.replace(/<(?:.|\n)*?>/gm, "").replace(/\s+/g, " ").trim());
 // 				},
 // 				error: function(error) {
-// 					bot.say(to, "Last.fm " + lightRed + bold + "| " + bold + reset + bold + text + bold + " is not a valid artist on Last.fm!");
+// 					bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + bold + reset + bold + text + bold + " is not a valid artist on Last.fm!");
 // 				}
 // 			}
 // 		});
@@ -331,63 +349,84 @@ bot.addListener("message", function(from, to, text) {
 // });
 
 // .similar
-
-bot.addListener("message", function(from, to, text, message) {
-	if(text.search(".similar ") > -1 && text.search(".similar ") === 0) {
-		text = text.replace(".similar ", "");
+api.hookEvent("orcatail", "privmsg", function(message) {
+	if((message.message).search(".similar ") === 0) {
+		text = (message.message).replace(".similar ", "");
 		lastfm.request("artist.getSimilar", {
 			artist: text,
 			autocorrect: 1,
 			limit: 5,
 			handlers: {
 				success: function(data) {
+					if((data.similarartists).length < 5) {
+							var x = (data.similarartists).length;
+						} else {
+							x = 5;
+						}
 					var charts = [];
 						for(i = 0; i < 5; i++) {
 							charts.push(data.similarartists.artist[i].name + " (" + (data.similarartists.artist[i].match*100).toFixed(2) + "% match" + ")");
 						}
-					bot.say(to, "Last.fm " + lightRed + bold + "| " + reset + "Artists similar to " + bold + text + lightRed + " | " + reset + charts.join(", "));
+					bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + "Artists similar to " + bold + text + lightRed + " | " + reset + charts.join(", "));
 				},
 				error: function(error) {
-					bot.say(to, "Last.fm " + lightRed + bold + "| " + bold + reset + bold + text + bold + " is not a valid artist on Last.fm!");
+					bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + bold + reset + bold + text + bold + " is not a valid artist on Last.fm!");
 				}
 			}
 		});
 	}
 });
 
-
-
-
 // hitbox live updates
 
-	http.get("http://api.hitbox.tv/media/live/channel", function(res) {
-		res.setEncoding("utf8");
-		res.on("data", function(chunk) {
-			if(chunk === "no_media_found") {return /*need to restart loop from here....i think*/}
-			chunk = JSON.parse(chunk);
-			console.log(chunk.livestream[0].media_is_live); // 0|1 = offline|online
-			console.log(chunk.livestream[0].category_name); // name of game
-			console.log(chunk.livestream[0].media_status); // stream title
-			console.log(chunk.livestream[0].team_name); // team name, could be null
-			console.log(chunk.livestream[0].channel.user_name); // username
-			console.log(chunk.livestream[0].channel.channel_link); // channel link
-		})
-	}).on("error", function(error) {
-		console.log("Got error: " + error.message);
-	});
+// var isLive = 0;
+// var sentFlag = 0;
 
-	var isLive;
-	var sentFlag;
+// function timer() {
+// 	try{
+// 		http.get("http://api.hitbox.tv/media/live/SchismLock", function(res) {
+// 			res.setEncoding("utf8");
+// 			res.on("data", function(chunk) {
+// 				if(chunk === "no_media_found") {
+// 					console.log("no media found");
+// 					return;
+// 				}
+// 				chunk = JSON.parse(chunk);
+// 				console.log("parsed");
+// 				if(chunk.livestream[0].media_is_live === "1") {
+// 					isLive = 1;
+// 					console.log("live");
+// 					if(sentFlag === 0) {
+// 						console.log("lakdfjlasdkj");
+// 						if(chunk.livestream[0].team_name == null) {
+// 							api.hookEvent("orcatail", "registered", function(message) {
+// 								bot.irc.privmsg(channel.channels, "hitbox.tv " + lightGreen + "| " + reset + "\"" + chunk.livestream[0].media_status + "\" " + lightGreen + "| " + reset  + bold + chunk.livestream[0].channel.user_name + reset + " is currently live and playing " + chunk.livestream[0].category_name + " at " + chunk.livestream[0].channel.channel_link);
+// 								console.log("livelive");
+// 							});
+// 						} else {
+// 							api.hookEvent("orcatail", "registered", function(message) {
+// 								bot.irc.privmsg(channel.channels, "hitbox.tv " + lightGreen + "| " + reset + "\"" + chunk.livestream[0].media_status + "\" " + lightGreen + "| " + reset  + bold + chunk.livestream[0].channel.user_name + reset + " is currently live and playing " + chunk.livestream[0].category_name + " on " + chunk.livestream[0].team_name + " at " + chunk.livestream[0].channel.channel_link);
+// 								console.log("livelivelive");
+// 							});
+// 						}
+// 						sentFlag = 1;
+// 						console.log("sentFlag = 1")
+// 					}
+// 				} else {
+// 					sentFlag = 0;
+// 					console.log("not live");
+// 				}
+// 			});
+// 		}).on("error", function(error) {
+// 			console.log("Got error: " + error.message);
+// 		});
+// 	} catch(e) {
+// 		console.log(e);
+// 		console.log("hitbox");
+// 	}
+// }
 
-	while(1) {
-		if(chunk.livestream[0].media_is_live === 1) {
-			isLive = 1;
-			if(sentFlag === 0) {
-				// bot.say
-				sentFlag = 1;
-			}
-		} else {
-			sentFlag = 0;
-		}
-		// delay 60
-	}
+// timer();
+// setInterval(function() {
+// 	return timer();
+// }, 60000);
