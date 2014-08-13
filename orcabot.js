@@ -335,7 +335,6 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 				    		break;
 					  	default:
 					    	adjective = "VERY LOW";
-					    	break;
 					}
 					if((data.comparison.result.artists.artist).length < 5) {
 							var x = (data.comparison.result.artists.artist).length;
