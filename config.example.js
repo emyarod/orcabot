@@ -1,17 +1,9 @@
 var config = {
-	channels: ["#channel1", "#channel2"],
-	server: "",
-	botName: "",
-	realName: "https://github.com/emyarod/orcabot",
-	password: "password",
-	twitterConsumerKey: "twitterConsumerKey",
-	twitterConsumerSecret: "twitterConsumerSecret",
-	twitterAccessToken: "twitterAccessToken",
-	twitterAccessTokenSecret: "twitterAccessTokenSecret",
-	lfmApiKey: "lfmApiKey",
-	lfmSecret: "lfmSecret",
-	igClientId: "igClientId",
-	igClientSecret: "igClientSecret"
+    nick: "nick",
+    user: "user",
+    realname: "https://github.com/emyarod/orcabot",
+    server: "server",
+    password: "password",
 };
 
 module.exports = config;
