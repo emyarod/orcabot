@@ -321,16 +321,16 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 					  	case (score >= 90):
 					    	adjective = "SUPER";
 					    	break;
-				    	case (90 > score >= 70):
+				    	case (90 > score && score >= 70):
 					    	adjective = "VERY HIGH";
 					    	break;
-				    	case (70 > score >= 50):
+				    	case (70 > score && score >= 50):
 					    	adjective = "HIGH";
 					    	break;
-				    	case (50 > score >= 30):
+				    	case (50 > score && score >= 30):
 				    		adjective = "MEDIUM";
 				    		break;
-			    		case (30 > score >= 10):
+			    		case (30 > score && score >= 10):
 				    		adjective = "LOW";
 				    		break;
 					  	default:
