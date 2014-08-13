@@ -50,6 +50,8 @@ var bold = "\u0002";
 var reset = "\u000f";
 var underline = "\u001f";
 
+
+// help
 api.hookEvent("orcatail", "privmsg", function(message) {
 	if(message.message === ".help") {
 		bot.irc.privmsg(message.target, "Available commands: g, tw, ig, np, charts, addlastfm, compare, similar. Type \".help <command>\" for more information about a command!");
@@ -114,7 +116,9 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 	if((message.message).search(".tw ") === 0) {
 		var text = (message.message).replace(".tw ", "");
 		t.get("statuses/user_timeline", {screen_name: text, count: 1}, function (err, data, response) {
-			if(data === undefined) {
+			if(data[0] === undefined) {
+				bot.irc.privmsg(message.target, "Twitter " + cyan + bold + "| " + reset + bold + text + reset + " hasn't tweeted yet!");
+			} else if(data === undefined) {
 				bot.irc.privmsg(message.target, "Twitter " + cyan + bold + "| " + reset + bold + text + reset + " is not a valid Twitter handle!");
 			} else {
 				bot.irc.privmsg(message.target, "Twitter " + cyan + bold + "| " + bold + reset + "Most recent tweet by " + bold + data[0].user.name + bold + " "  + "(" + bold + "@" + data[0].user.screen_name + bold + ")" + bold + cyan + " | " + bold + reset + data[0].text + cyan + bold + " | " + bold + reset + data[0].created_at);
@@ -164,6 +168,8 @@ fs.readFile(lastfmdb, "utf8", function(err, data) {
 	hostNames = Object.keys(hostsAndAccounts);
 });
 
+
+// add to db
 api.hookEvent("orcatail", "privmsg", function(message) {
 	if((message.message).search(".addlastfm ") === 0) {
 		var text = (message.message).replace(".addlastfm ", "");
@@ -191,6 +197,16 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 });
 
 // now playing .np <self/user/registered handle>
+
+// if(message = ".np username" && username found in db)
+
+// if(message = ".np username" && username not in db)
+
+// if(message = ".np" && hostname found in db)
+
+// if message = ".np" && hostname not found in db
+
+
 api.hookEvent("orcatail", "privmsg", function(message) {
 	if((message.message).search(".np ") === 0) {
 		var text = (message.message).replace(".np ", "");
