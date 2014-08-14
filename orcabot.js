@@ -77,7 +77,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 	    		bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Last.fm module!" + bold + " Usage: " + reset + ".addlastfm <username> stores your hostname and current IRC handle in the bot's database for usage with the .np, .charts, and .compare commands. You must be identified/authenticated on Snoonet for this feature to be of any significant usefulness.");
 	    		break;
     		case (text === "compare"):
-	    		bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Last.fm module!" + bold + " Usage: " + reset + ".compare <username> calculates your musical compatibility with <username> using the last.fm tasteometer.");
+	    		bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Last.fm module!" + bold + " Usage: " + reset + ".compare <username> calculates your musical compatibility with <username> using the last.fm tasteometer. .compare <username1> <username2> calculates the musical compatibility between <username1> and <username2> using the last.fm tasteometer.");
 	    		break;
 			case (text === "similar"):
 	    		bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Last.fm module!" + bold + " Usage: " + reset + ".similar <artist> returns a list of similar artists and a percentage value of how closely the artists match, according to last.fm.");
@@ -326,8 +326,10 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 // compare musical compatibility .compare <user/registered handle>
 api.hookEvent("orcatail", "privmsg", function(message) {
 	if((message.message).search(".compare ") === 0) {
-		var name1;
+		var name1 = message.nickname;
 		var name2 = (message.message).replace(".compare ", "");
+		var myArray = (message.message).split(" ");
+		myArray.splice(0, 1);
 		var hostess = JSON.stringify(hostsAndAccounts);
 		function compare(handle1, handle2) {
 			lastfm.request("tasteometer.compare", {
@@ -375,21 +377,109 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 				}
 			});
 		}
-		if(hostess.indexOf(name2) > -1) {
-			for(var i = 0; i < hostNames.length; i++) {
-				if((JSON.stringify(hostsAndAccounts[hostNames[i]].nicks)).search(name1) > -1) {
-					name1 = hostsAndAccounts[hostNames[i]].lfm;
-				} else {
-					name1 = message.nickname;
-				}
-				if((JSON.stringify(hostsAndAccounts[hostNames[i]].nicks)).search(name2) > -1) {
-					name2 = hostsAndAccounts[hostNames[i]].lfm;
+		if(myArray.length != 2) {
+			if(hostess.indexOf(name2) > -1) {
+				for(var i = 0; i < hostNames.length; i++) {
+					if((JSON.stringify(hostsAndAccounts[hostNames[i]].nicks)).search(name1) > -1) {
+						name1 = hostsAndAccounts[hostNames[i]].lfm;
+					}
+					if((JSON.stringify(hostsAndAccounts[hostNames[i]].nicks)).search(name2) > -1) {
+						name2 = hostsAndAccounts[hostNames[i]].lfm;
+					}
 				}
 			}
+			compare(name1, name2);
+		} else if(myArray.length === 2) {
+			var name1 = myArray[0];
+			var name2 = myArray[1];
+			var hostess = JSON.stringify(hostsAndAccounts);
+			if(hostess.indexOf(name1) > -1 || hostess.indexOf(name2) > -1) {
+				for(var i = 0; i < hostNames.length; i++) {
+					if((JSON.stringify(hostsAndAccounts[hostNames[i]].nicks)).search(name1) > -1) {
+						name1 = hostsAndAccounts[hostNames[i]].lfm;
+					}
+					if((JSON.stringify(hostsAndAccounts[hostNames[i]].nicks)).search(name2) > -1) {
+						name2 = hostsAndAccounts[hostNames[i]].lfm;
+					}
+				}
+			}
+			compare(name1, name2);
+			return;
 		}
-		compare(name1, name2);
 	}
 });
+
+// compare musical compatibility .compare <user/registered handle> <user/registered handle>
+// api.hookEvent("orcatail", "privmsg", function(message) {
+// 	if((message.message).search(".compare ") === 0) {
+// 		var myArray = (message.message).split(" ");
+// 		myArray.splice(0, 1);
+// 		if((message.message).search(".compare ") === 0 && myArray.length === 2) {
+// 			var name1 = myArray[0];
+// 			var name2 = myArray[1];
+// 			var hostess = JSON.stringify(hostsAndAccounts);
+// 			function compare(handle1, handle2) {
+// 				lastfm.request("tasteometer.compare", {
+// 					type1: "user",
+// 					value1: name1,
+// 					type2: "user",
+// 					value2: name2,
+// 					handlers: {
+// 						success: function(data) {
+// 							var score = (data.comparison.result.score * 100).toFixed(2);
+// 							var adjective = "";
+// 							switch(true) {
+// 							  	case (score >= 90):
+// 							    	adjective = "SUPER";
+// 							    	break;
+// 						    	case (90 > score && score >= 70):
+// 							    	adjective = "VERY HIGH";
+// 							    	break;
+// 						    	case (70 > score && score >= 50):
+// 							    	adjective = "HIGH";
+// 							    	break;
+// 						    	case (50 > score && score >= 30):
+// 						    		adjective = "MEDIUM";
+// 						    		break;
+// 					    		case (30 > score && score >= 10):
+// 						    		adjective = "LOW";
+// 						    		break;
+// 							  	default:
+// 							    	adjective = "VERY LOW";
+// 							}
+// 							if((data.comparison.result.artists.artist).length < 5) {
+// 									var x = (data.comparison.result.artists.artist).length;
+// 								} else {
+// 									x = 5;
+// 								}
+// 							var similarArtists = [];
+// 							for(i = 0; i < x; i++) {
+// 								similarArtists.push(data.comparison.result.artists.artist[i].name);
+// 							}
+// 							bot.irc.privmsg(message.target, "Last.fm" + bold + lightRed + " | " + bold + reset + "Users " + bold + name1 + reset + " and " + bold + name2 + reset + " have " + bold + adjective + reset + " compatibility (similarity " + score + "%)" + darkRed + bold + " | " + reset + "Similar artists include: " + similarArtists.join(", "));
+// 						},
+// 						error: function(error) {
+// 							bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + bold + reset + "Either " + bold + name1 + reset + " or " + bold + name2 + bold + " is not a registered username on Last.fm!");
+// 						}
+// 					}
+// 				});
+// 			}
+// 			if(hostess.indexOf(name1) > -1 || hostess.indexOf(name2) > -1) {
+// 				for(var i = 0; i < hostNames.length; i++) {
+// 					if((JSON.stringify(hostsAndAccounts[hostNames[i]].nicks)).search(name1) > -1) {
+// 						name1 = hostsAndAccounts[hostNames[i]].lfm;
+// 					}
+// 					if((JSON.stringify(hostsAndAccounts[hostNames[i]].nicks)).search(name2) > -1) {
+// 						name2 = hostsAndAccounts[hostNames[i]].lfm;
+// 					}
+// 				}
+// 			}
+// 			compare(name1, name2);
+// 		}
+// 	}
+// });
+
+
 
 // get artist info <is truncated at ~440 characters
 // api.hookEvent("orcatail", "privmsg", function(message) {
