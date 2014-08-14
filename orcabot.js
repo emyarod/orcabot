@@ -215,6 +215,8 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 // now playing .np <self/user/registered handle>
 api.hookEvent("orcatail", "privmsg", function(message) {
 	if((message.message).search(".np") === 0) {
+		var text;
+		var hostess = JSON.stringify(hostsAndAccounts);
 		function nowplaying(handle) {
 			lastfm.request("user.getRecentTracks", {
 				user: handle,
@@ -238,8 +240,6 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 				}
 			});
 		}
-		var text;
-		var hostess = JSON.stringify(hostsAndAccounts);
 		switch(true) {
 			case((message.message).search(".np ") === 0):
 				text = (message.message).replace(".np ", "");
@@ -270,6 +270,8 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 // weekly charts .charts <self/user/registered handle>
 api.hookEvent("orcatail", "privmsg", function(message) {
 	if((message.message).search(".charts") === 0) {
+		var text;
+		var hostess = JSON.stringify(hostsAndAccounts);
 		function getCharts(handle) {
 			lastfm.request("user.getTopArtists", {
 				user: handle,
@@ -294,8 +296,6 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 				}
 			});
 		}
-		var test;
-		var hostess = JSON.stringify(hostsAndAccounts);
 		switch(true) {
 			case((message.message).search(".charts ") === 0):
 				text = (message.message).replace(".charts ", "");
@@ -326,51 +326,68 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 // compare musical compatibility .compare <user/registered handle>
 api.hookEvent("orcatail", "privmsg", function(message) {
 	if((message.message).search(".compare ") === 0) {
-		var text = (message.message).replace(".compare ", "");
-		lastfm.request("tasteometer.compare", {
-			type1: "user",
-			value1: message.nickname,
-			type2: "user",
-			value2: text,
-			handlers: {
-				success: function(data) {
-					var score = (data.comparison.result.score*100).toFixed(2);
-					var adjective = "";
-					switch(true) {
-					  	case (score >= 90):
-					    	adjective = "SUPER";
-					    	break;
-				    	case (90 > score && score >= 70):
-					    	adjective = "VERY HIGH";
-					    	break;
-				    	case (70 > score && score >= 50):
-					    	adjective = "HIGH";
-					    	break;
-				    	case (50 > score && score >= 30):
-				    		adjective = "MEDIUM";
-				    		break;
-			    		case (30 > score && score >= 10):
-				    		adjective = "LOW";
-				    		break;
-					  	default:
-					    	adjective = "VERY LOW";
-					}
-					if((data.comparison.result.artists.artist).length < 5) {
-							var x = (data.comparison.result.artists.artist).length;
-						} else {
-							x = 5;
+		var name1;
+		var name2 = (message.message).replace(".compare ", "");
+		var hostess = JSON.stringify(hostsAndAccounts);
+		function compare(handle1, handle2) {
+			lastfm.request("tasteometer.compare", {
+				type1: "user",
+				value1: name1,
+				type2: "user",
+				value2: name2,
+				handlers: {
+					success: function(data) {
+						var score = (data.comparison.result.score * 100).toFixed(2);
+						var adjective = "";
+						switch(true) {
+						  	case (score >= 90):
+						    	adjective = "SUPER";
+						    	break;
+					    	case (90 > score && score >= 70):
+						    	adjective = "VERY HIGH";
+						    	break;
+					    	case (70 > score && score >= 50):
+						    	adjective = "HIGH";
+						    	break;
+					    	case (50 > score && score >= 30):
+					    		adjective = "MEDIUM";
+					    		break;
+				    		case (30 > score && score >= 10):
+					    		adjective = "LOW";
+					    		break;
+						  	default:
+						    	adjective = "VERY LOW";
 						}
-					var similarArtists = [];
-					for(i = 0; i < x; i++) {
-						similarArtists.push(data.comparison.result.artists.artist[i].name);
+						if((data.comparison.result.artists.artist).length < 5) {
+								var x = (data.comparison.result.artists.artist).length;
+							} else {
+								x = 5;
+							}
+						var similarArtists = [];
+						for(i = 0; i < x; i++) {
+							similarArtists.push(data.comparison.result.artists.artist[i].name);
+						}
+						bot.irc.privmsg(message.target, "Last.fm" + bold + lightRed + " | " + bold + reset + "Users " + bold + name1 + reset + " and " + bold + name2 + reset + " have " + bold + adjective + reset + " compatibility (similarity " + score + "%)" + darkRed + bold + " | " + reset + "Similar artists include: " + similarArtists.join(", "));
+					},
+					error: function(error) {
+						bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + bold + reset + "Either " + bold + name1 + reset + " or " + bold + name2 + bold + " is not a registered username on Last.fm!");
 					}
-					bot.irc.privmsg(message.target, "Last.fm" + bold + lightRed + " | " + bold + reset + "Users " + message.nickname + " and " + text + " have " + bold + adjective + reset + " compatibility (similarity " + score + "%)" + darkRed + bold + " | " + reset + "Similar artists include: " + similarArtists.join(", "));
-				},
-				error: function(error) {
-					bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + bold + reset + "Either " + bold + message.nickname + reset + " or " + bold + text + bold + " is not a registered username on Last.fm!");
+				}
+			});
+		}
+		if(hostess.indexOf(name2) > -1) {
+			for(var i = 0; i < hostNames.length; i++) {
+				if((JSON.stringify(hostsAndAccounts[hostNames[i]].nicks)).search(name1) > -1) {
+					name1 = hostsAndAccounts[hostNames[i]].lfm;
+				} else {
+					name1 = message.nickname;
+				}
+				if((JSON.stringify(hostsAndAccounts[hostNames[i]].nicks)).search(name2) > -1) {
+					name2 = hostsAndAccounts[hostNames[i]].lfm;
 				}
 			}
-		});
+		}
+		compare(name1, name2);
 	}
 });
 
