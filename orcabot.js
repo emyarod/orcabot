@@ -179,7 +179,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 				success: function(data) {
 					if(hostNames.indexOf(message.hostname) > -1 && (hostsAndAccounts[message.hostname].nicks).indexOf(message.nickname) > -1) {
 						bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + bold + message.nickname + bold + " (" + message.hostname + ")" + " already has an associated Last.fm account (http://www.last.fm/user/" + Object.getOwnPropertyDescriptor(hostsAndAccounts[message.hostname], "lfm").value + reset + ")!");
-					} else if (hostNames.indexOf(message.hostname) > -1 && (hostsAndAccounts[message.hostname].nicks) === -1) {
+					} else if (hostNames.indexOf(message.hostname) > -1 && (hostsAndAccounts[message.hostname].nicks).indexOf(message.nickname) === -1) {
 						nicks = (hostsAndAccounts[message.hostname].nicks);
 						nicks.push(message.nickname);
 						hostsAndAccounts[message.hostname] = {
@@ -330,13 +330,14 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 		var name2 = (message.message).replace(".compare ", "");
 		var myArray = (message.message).split(" ");
 		myArray.splice(0, 1);
+		console.log(myArray.length);
 		var hostess = JSON.stringify(hostsAndAccounts);
 		function compare(handle1, handle2) {
 			lastfm.request("tasteometer.compare", {
 				type1: "user",
-				value1: name1,
+				value1: handle1,
 				type2: "user",
-				value2: name2,
+				value2: handle2,
 				handlers: {
 					success: function(data) {
 						var score = (data.comparison.result.score * 100).toFixed(2);
@@ -378,7 +379,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 			});
 		}
 		if(myArray.length != 2) {
-			if(hostess.indexOf(name2) > -1) {
+			if(hostess.search(name1) > -1 || hostess.search(name2) > -1) {
 				for(var i = 0; i < hostNames.length; i++) {
 					if((JSON.stringify(hostsAndAccounts[hostNames[i]].nicks)).search(name1) > -1) {
 						name1 = hostsAndAccounts[hostNames[i]].lfm;
@@ -389,11 +390,13 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 				}
 			}
 			compare(name1, name2);
-		} else if(myArray.length === 2) {
-			var name1 = myArray[0];
-			var name2 = myArray[1];
-			var hostess = JSON.stringify(hostsAndAccounts);
-			if(hostess.indexOf(name1) > -1 || hostess.indexOf(name2) > -1) {
+			return;
+		}  else if(myArray.length === 2) {
+			name1 = myArray[0];
+			name2 = myArray[1];
+			console.log(hostess.search(name1) > -1);
+			console.log(hostess.search(name2) > -1);
+			if(hostess.search(name1) > -1 || hostess.search(name2) > -1) {
 				for(var i = 0; i < hostNames.length; i++) {
 					if((JSON.stringify(hostsAndAccounts[hostNames[i]].nicks)).search(name1) > -1) {
 						name1 = hostsAndAccounts[hostNames[i]].lfm;
