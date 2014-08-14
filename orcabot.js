@@ -214,87 +214,65 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 
 // now playing .np <self/user/registered handle>
 api.hookEvent("orcatail", "privmsg", function(message) {
-	function nowplaying(handle) {
-		lastfm.request("user.getRecentTracks", {
-			user: handle,
-			handlers: {
-				success: function(data) {
-					if(data.recenttracks.track[0]["@attr"] === undefined) {
-						if(data.recenttracks.track[0].album['#text'] !== "") {
-							bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + bold + handle + reset + " last listened to " + "\"" + data.recenttracks.track[0].name + "\"" + " by " + data.recenttracks.track[0].artist["#text"] + " from " + underline + data.recenttracks.track[0].album["#text"] + underline + lightRed + bold + " | " + reset + "http://www.last.fm/user/" + handle + "/now");
+	if((message.message).search(".np") === 0) {
+		function nowplaying(handle) {
+			lastfm.request("user.getRecentTracks", {
+				user: handle,
+				handlers: {
+					success: function(data) {
+						if(data.recenttracks.track[0]["@attr"] === undefined) {
+							if(data.recenttracks.track[0].album['#text'] !== "") {
+								bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + bold + handle + reset + " last listened to " + "\"" + data.recenttracks.track[0].name + "\"" + " by " + data.recenttracks.track[0].artist["#text"] + " from " + underline + data.recenttracks.track[0].album["#text"] + underline + lightRed + bold + " | " + reset + "http://www.last.fm/user/" + handle + "/now");
+							} else {
+								bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + bold + handle + reset + " last listened to " + "\"" + data.recenttracks.track[0].name + "\"" + " by " + data.recenttracks.track[0].artist["#text"] + lightRed + bold + " | " + reset + "http://www.last.fm/user/" + handle + "/now");
+							}
+						} else if(data.recenttracks.track[0].album['#text'] !== "") {
+							bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + bold + handle + reset + " is listening to " + "\"" + data.recenttracks.track[0].name + "\"" + " by " + data.recenttracks.track[0].artist["#text"] + " from " + underline + data.recenttracks.track[0].album["#text"] + underline + lightRed + bold + " | " + reset + "http://www.last.fm/user/" + handle + "/now");
 						} else {
-							bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + bold + handle + reset + " last listened to " + "\"" + data.recenttracks.track[0].name + "\"" + " by " + data.recenttracks.track[0].artist["#text"] + lightRed + bold + " | " + reset + "http://www.last.fm/user/" + handle + "/now");
+							bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + bold + handle + reset + " is listening to " + "\"" + data.recenttracks.track[0].name + "\"" + " by " + data.recenttracks.track[0].artist["#text"] + lightRed + bold + " | " + reset + "http://www.last.fm/user/" + handle + "/now");
 						}
-					} else if(data.recenttracks.track[0].album['#text'] !== "") {
-						bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + bold + handle + reset + " is listening to " + "\"" + data.recenttracks.track[0].name + "\"" + " by " + data.recenttracks.track[0].artist["#text"] + " from " + underline + data.recenttracks.track[0].album["#text"] + underline + lightRed + bold + " | " + reset + "http://www.last.fm/user/" + handle + "/now");
-					} else {
-						bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + bold + handle + reset + " is listening to " + "\"" + data.recenttracks.track[0].name + "\"" + " by " + data.recenttracks.track[0].artist["#text"] + lightRed + bold + " | " + reset + "http://www.last.fm/user/" + handle + "/now");
-					}
-				},
-				error: function(error) {
-					bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + bold + reset + bold + handle + bold + " is not a registered username on Last.fm!");
-				}
-			}
-		});
-	}
-	switch(true) {
-		case((message.message).search(".np ") === 0):
-			var text = (message.message).replace(".np ", "");
-			var hostess = JSON.stringify(hostsAndAccounts);
-			if(hostess.indexOf(text) > -1) {
-				for(var i = 0; i < hostNames.length; i++) {
-					if((JSON.stringify(hostsAndAccounts[hostNames[i]].nicks)).search(text) > -1) {
-						text = hostsAndAccounts[hostNames[i]].lfm;
-						break;
+					},
+					error: function(error) {
+						bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + bold + reset + bold + handle + bold + " is not a registered username on Last.fm!");
 					}
 				}
-			}
-			nowplaying(text);
-			break;
-		case(message.message === ".np"):
-			if(hostNames.indexOf(message.hostname) > -1) {
-				text = Object.getOwnPropertyDescriptor(hostsAndAccounts[message.hostname], "lfm").value;
+			});
+		}
+		var text;
+		var hostess = JSON.stringify(hostsAndAccounts);
+		switch(true) {
+			case((message.message).search(".np ") === 0):
+				text = (message.message).replace(".np ", "");
+				if(hostess.indexOf(text) > -1) {
+					for(var i = 0; i < hostNames.length; i++) {
+						if((JSON.stringify(hostsAndAccounts[hostNames[i]].nicks)).search(text) > -1) {
+							text = hostsAndAccounts[hostNames[i]].lfm;
+							break;
+						}
+					}
+				}
 				nowplaying(text);
-			}  else {
-				bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + bold + message.nickname + bold + " doesn't exist in my database! Please use " + "\"" + ".addlastfm <last.fm username>" + "\"" + " to add yourself the db. You must be identified on " + config.server + ".");
-			}
-			break;
-		default:
-			bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + bold + message.nickname + bold + " doesn't exist in my database! Please use " + "\"" + ".addlastfm <last.fm username>" + "\"" + " to add yourself the db. You must be identified on " + config.server + ".");
+				break;
+			case(message.message === ".np"):
+				if(hostNames.indexOf(message.hostname) > -1) {
+					text = Object.getOwnPropertyDescriptor(hostsAndAccounts[message.hostname], "lfm").value;
+					nowplaying(text);
+				}  else {
+					bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + bold + message.nickname + bold + " doesn't exist in my database! Please use " + "\"" + ".addlastfm <last.fm username>" + "\"" + " to add yourself the db. You must be identified on " + config.server + ".");
+				}
+				break;
+			default:
+				return;
+		}
 	}
 });
 
 // weekly charts .charts <self/user/registered handle>
 api.hookEvent("orcatail", "privmsg", function(message) {
-	if((message.message).search(".charts ") === 0) {
-		var text = (message.message).replace(".charts ", "");
-		lastfm.request("user.getTopArtists", {
-			user: text,
-			period: "7day",
-			limit: 5,
-			handlers: {
-				success: function(data) {
-					var charts = [];
-					if((data.topartists.artist).length < 5) {
-						var x = (data.topartists.artist).length;
-					} else {
-						x = 5;
-					}
-					for(i = 0; i < x; i++) {
-						charts.push(data.topartists.artist[i].name + " (" + data.topartists.artist[i].playcount + ")");
-					}
-					bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + "Weekly charts for " + bold + text + lightRed + " | " + reset + charts.join(", "));
-				},
-				error: function(error) {
-					bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + bold + reset + bold + text + bold + " is not a registered username on Last.fm!");
-				}
-			}
-		});
-	} else if((message.message) === ".charts") {
-		if(hostNames.indexOf(message.hostname) > -1) {
-			var lfmAccount = Object.getOwnPropertyDescriptor(hostsAndAccounts[message.hostname], "lfm").value;
+	if((message.message).search(".charts") === 0) {
+		function getCharts(handle) {
 			lastfm.request("user.getTopArtists", {
-				user: lfmAccount,
+				user: handle,
 				period: "7day",
 				limit: 5,
 				handlers: {
@@ -308,16 +286,39 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 						for(i = 0; i < x; i++) {
 							charts.push(data.topartists.artist[i].name + " (" + data.topartists.artist[i].playcount + ")");
 						}
-						bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + "Weekly charts for " + bold + lfmAccount + lightRed + " | " + reset + charts.join(", "));
+						bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + "Weekly charts for " + bold + handle + lightRed + " | " + reset + charts.join(", "));
 					},
 					error: function(error) {
-						bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + bold + reset + bold + lfmAccount + bold + " is not a registered username on Last.fm!");
+						bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + bold + reset + bold + handle + bold + " is not a registered username on Last.fm!");
 					}
 				}
 			});
-		} else {
-			lfmAccount = message.nickname;
-			bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + bold + lfmAccount + bold + " doesn't exist in my database! Please use " + "\"" + ".addlastfm <last.fm username>" + "\"" + " to add yourself the db. You must be identified on " + config.server + ".");
+		}
+		var test;
+		var hostess = JSON.stringify(hostsAndAccounts);
+		switch(true) {
+			case((message.message).search(".charts ") === 0):
+				text = (message.message).replace(".charts ", "");
+				if(hostess.indexOf(text) > -1) {
+					for(var i = 0; i < hostNames.length; i++) {
+						if((JSON.stringify(hostsAndAccounts[hostNames[i]].nicks)).search(text) > -1) {
+							text = hostsAndAccounts[hostNames[i]].lfm;
+							break;
+						}
+					}
+				}
+				getCharts(text);
+				break;
+			case((message.message) === ".charts"):
+				if(hostNames.indexOf(message.hostname) > -1) {
+					text = Object.getOwnPropertyDescriptor(hostsAndAccounts[message.hostname], "lfm").value;
+					getCharts(text);
+				} else {
+					bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + bold + message.nickname + bold + " doesn't exist in my database! Please use " + "\"" + ".addlastfm <last.fm username>" + "\"" + " to add yourself the db. You must be identified on " + config.server + ".");
+				}
+				break;
+			default:
+				return;
 		}
 	}
 });
