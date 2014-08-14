@@ -97,7 +97,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 
 // google
 api.hookEvent("orcatail", "privmsg", function(message) {
-	if((message.message).search(".g ") === 0) {
+	if((message.message).search("\\.g ") === 0) {
 		var text = (message.message).replace(".g ", "").replace(/ /g, "+");
 		var searchLink = "https://google.com/search?q=" + text;
 		bot.irc.privmsg(message.target, searchLink);
@@ -113,7 +113,7 @@ var t = new twit({
 });
 
 api.hookEvent("orcatail", "privmsg", function(message) {
-	if((message.message).search(".tw ") === 0) {
+	if((message.message).search("\\.tw ") === 0) {
 		var text = (message.message).replace(".tw ", "");
 		t.get("statuses/user_timeline", {screen_name: text, count: 1}, function (err, data, response) {
 			if(data === undefined) {
@@ -134,7 +134,7 @@ ig.use({
 });
 
 api.hookEvent("orcatail", "privmsg", function(message) {
-	if((message.message).search(".ig ") === 0) {
+	if((message.message).search("\\.ig ") === 0) {
 		var text = (message.message).replace(".ig ", "");
 		ig.user_search(text, {count: 1}, function(err, users, limit) {
 			if(users.length > 0 && users[0].username === text) {
@@ -171,7 +171,7 @@ fs.readFile(lastfmdb, "utf8", function(err, data) {
 
 // add to db
 api.hookEvent("orcatail", "privmsg", function(message) {
-	if((message.message).search(".addlastfm ") === 0) {
+	if((message.message).search("\\.addlastfm ") === 0) {
 		var text = (message.message).replace(".addlastfm ", "");
 		lastfm.request("user.getInfo", {
 			user: text,
@@ -214,7 +214,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 
 // now playing .np <self/user/registered handle>
 api.hookEvent("orcatail", "privmsg", function(message) {
-	if((message.message).search(".np") === 0) {
+	if((message.message).search("\\.np") === 0) {
 		var text;
 		var hostess = JSON.stringify(hostsAndAccounts);
 		function nowplaying(handle) {
@@ -241,7 +241,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 			});
 		}
 		switch(true) {
-			case((message.message).search(".np ") === 0):
+			case((message.message).search("\\.np ") === 0):
 				text = (message.message).replace(".np ", "");
 				if(hostess.indexOf(text) > -1) {
 					for(var i = 0; i < hostNames.length; i++) {
@@ -269,7 +269,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 
 // weekly charts .charts <self/user/registered handle>
 api.hookEvent("orcatail", "privmsg", function(message) {
-	if((message.message).search(".charts") === 0) {
+	if((message.message).search("\\.charts") === 0) {
 		var text;
 		var hostess = JSON.stringify(hostsAndAccounts);
 		function getCharts(handle) {
@@ -297,7 +297,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 			});
 		}
 		switch(true) {
-			case((message.message).search(".charts ") === 0):
+			case((message.message).search("\\.charts ") === 0):
 				text = (message.message).replace(".charts ", "");
 				if(hostess.indexOf(text) > -1) {
 					for(var i = 0; i < hostNames.length; i++) {
@@ -325,7 +325,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 
 // compare musical compatibility .compare <user/registered handle>
 api.hookEvent("orcatail", "privmsg", function(message) {
-	if((message.message).search(".compare ") === 0) {
+	if((message.message).search("\\.compare ") === 0) {
 		var name1 = message.nickname;
 		var name2 = (message.message).replace(".compare ", "");
 		var myArray = (message.message).split(" ");
@@ -415,7 +415,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 
 // get artist info <is truncated at ~440 characters
 // api.hookEvent("orcatail", "privmsg", function(message) {
-// 	if((message.message).search(".getinfo ") === 0) {
+// 	if((message.message).search("\\.getinfo ") === 0) {
 // 		text = (message.message).replace(".getinfo ", "");
 // 		lastfm.request("artist.getInfo", {
 // 			artist: text,
@@ -436,7 +436,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 
 // .similar
 api.hookEvent("orcatail", "privmsg", function(message) {
-	if((message.message).search(".similar ") === 0) {
+	if((message.message).search("\\.similar ") === 0) {
 		var text = (message.message).replace(".similar ", "");
 		lastfm.request("artist.getSimilar", {
 			artist: text,
