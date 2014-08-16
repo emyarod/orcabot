@@ -8,7 +8,7 @@ var fs = require("fs");
 var http = require("http");
 var factory = require("irc-factory"),
     api = new factory.Api();
-var Entities = require('html-entities').AllHtmlEntities;
+var Entities = require("html-entities").AllHtmlEntities;
 var twit = require("twit");
 var LastFmNode = require("lastfm").LastFmNode;
 var ig = require("instagram-node").instagram();
@@ -50,61 +50,6 @@ var bold = "\u0002";
 var reset = "\u000f";
 var underline = "\u001f";
 
-
-// help
-api.hookEvent("orcatail", "privmsg", function(message) {
-	if(message.message === ".help") {
-		bot.irc.privmsg(message.target, "Available commands: g, tw, ig, np, charts, addlastfm, compare, similar. Type \".help <command>\" for more information about a command!");
-	} else if((message.message).search(".help ") === 0) {
-		var text = (message.message).replace(".help ", "");
-		switch(true) {
-		  	case (text === "g"):
-		    	bot.irc.privmsg(message.target, "not 100%");
-		    	break;
-	    	case (text === "tw"):
-		    	bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Twitter module!" + bold + " Usage: " + reset + ".tw <username> will return the most recent tweet by <username>.");
-		    	break;
-	    	case (text === "ig"):
-		    	bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Instagram module!" + bold + " Usage: " + reset + ".ig <username> will return the most recent photo/video by <username>, along with the caption and filter used (if applicable).");
-		    	break;
-	    	case (text === "np"):
-	    		bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Last.fm module!" + bold + " Usage: " + reset + ".np (with no other parameters) returns your currently playing or most recently scrobbled track on last.fm (you must be in the bot's database for this function to work!). Entering .np <username> returns the currently playing or most recently scrobbled track for <username> on last.fm.");
-	    		break;
-    		case (text === "charts"):
-	    		bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Last.fm module!" + bold + " Usage: " + reset + ".charts (with no other parameters) returns your top five most played artists in the last seven days on last.fm (you must be in the bot's database for this function to work!). Entering .charts <username> returns the top five most played artists in the last seven days for <username> on last.fm.");
-	    		break;
-    		case (text === "addlastfm"):
-	    		bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Last.fm module!" + bold + " Usage: " + reset + ".addlastfm <username> stores your hostname and current IRC handle in the bot's database for usage with the .np, .charts, and .compare commands. You must be identified/authenticated on Snoonet for this feature to be of any significant usefulness.");
-	    		break;
-    		case (text === "compare"):
-	    		bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Last.fm module!" + bold + " Usage: " + reset + ".compare <username> calculates your musical compatibility with <username> using the last.fm tasteometer. .compare <username1> <username2> calculates the musical compatibility between <username1> and <username2> using the last.fm tasteometer.");
-	    		break;
-			case (text === "similar"):
-	    		bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Last.fm module!" + bold + " Usage: " + reset + ".similar <artist> returns a list of similar artists and a percentage value of how closely the artists match, according to last.fm.");
-	    		break;
-		  	default:
-		    	bot.irc.privmsg(message.target, text + " is not a valid command!");
-		}
-	}
-});
-
-// greeting
-api.hookEvent("orcatail", "privmsg", function(message) {
-	if((message.message).indexOf("hi") > -1) {
-		bot.irc.privmsg(message.target, "(⊙ ◡ ⊙)");
-	}
-});
-
-// google
-api.hookEvent("orcatail", "privmsg", function(message) {
-	if((message.message).search("\\.g ") === 0) {
-		var text = (message.message).replace(".g ", "").replace(/ /g, "+");
-		var searchLink = "https://google.com/search?q=" + text;
-		bot.irc.privmsg(message.target, searchLink);
-	}
-});
-
-// twitter
 var t = new twit({
 	consumer_key: keys.twitterConsumerKey,
 	consumer_secret: keys.twitterConsumerSecret,
@@ -112,51 +57,121 @@ var t = new twit({
 	access_token_secret: keys.twitterAccessTokenSecret
 });
 
-api.hookEvent("orcatail", "privmsg", function(message) {
-	if((message.message).search("\\.tw ") === 0) {
-		var text = (message.message).replace(".tw ", "");
-		t.get("statuses/user_timeline", {screen_name: text, count: 1}, function (err, data, response) {
-			if(data === undefined) {
-				bot.irc.privmsg(message.target, "Twitter " + cyan + bold + "| " + reset + bold + text + reset + " is not a valid Twitter handle!");
-			} else if(data[0] === undefined) {
-				bot.irc.privmsg(message.target, "Twitter " + cyan + bold + "| " + reset + bold + text + reset + " hasn't tweeted yet!");
-			} else {
-				bot.irc.privmsg(message.target, "Twitter " + cyan + bold + "| " + bold + reset + "Most recent tweet by " + bold + data[0].user.name + bold + " "  + "(" + bold + "@" + data[0].user.screen_name + bold + ")" + bold + cyan + " | " + bold + reset + data[0].text + cyan + bold + " | " + bold + reset + data[0].created_at);
-			}
-		});
-	}
-});
-
-// instagram
 ig.use({
 	client_id: keys.igClientId,
 	client_secret: keys.igClientSecret
 });
 
-api.hookEvent("orcatail", "privmsg", function(message) {
-	if((message.message).search("\\.ig ") === 0) {
-		var text = (message.message).replace(".ig ", "");
-		ig.user_search(text, {count: 1}, function(err, users, limit) {
-			if(users.length > 0 && users[0].username === text) {
-				ig.user_media_recent(users[0].id, {count: 1}, function(err, medias, pagination, limit) {
-					if(medias[0].caption !== null) {
-						bot.irc.privmsg(message.target, "Instagram " + lightBlue + bold + "| " + reset + "Most recent post by " + bold + text + " (" + medias[0].user.full_name + ")" + lightBlue + " | " + reset + medias[0].caption.text + " " + (medias[0].link).replace("instagram.com", "instagr.am") + lightBlue + bold + " | " + reset + "Filter: " + medias[0].filter);
-					} else {
-						bot.irc.privmsg(message.target, "Instagram " + lightBlue + bold + "| " + reset + "Most recent post by " + bold + text + " (" + medias[0].user.full_name + ")" + lightBlue + " | " + reset + "No caption " + (medias[0].link).replace("instagram.com", "instagr.am") + lightBlue + bold + " | " + reset + "Filter: " + medias[0].filter);
-					}
-				});
-			} else {
-				bot.irc.privmsg(message.target, "Instagram " + lightBlue + bold + "| " + bold + reset + bold + text + bold + " is not a registered user on Instagram!");
-			}
-		});
-	}
-});
-
-// last.fm
 var lastfm = new LastFmNode({
 	api_key: keys.lfmApiKey,
 	secret: keys.lfmSecret
 });
+
+// modules
+api.hookEvent("orcatail", "privmsg", function(message) {
+	switch(true) {
+		// help
+		case (message.message === ".help" || (message.message).search(".help ") === 0):
+			if(message.message === ".help") {
+				bot.irc.privmsg(message.target, "Available commands: g, tw, ig, np, charts, addlastfm, compare, similar. Type \".help <command>\" for more information about a command!");
+			} else if((message.message).search(".help ") === 0) {
+				var text = (message.message).replace(".help ", "");
+				switch(true) {
+				  	case (text === "g"):
+				    	bot.irc.privmsg(message.target, "not 100%");
+				    	break;
+			    	case (text === "tw"):
+				    	bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Twitter module!" + bold + " Usage: " + reset + ".tw <username> will return the most recent tweet by <username>.");
+				    	break;
+			    	case (text === "ig"):
+				    	bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Instagram module!" + bold + " Usage: " + reset + ".ig <username> will return the most recent photo/video by <username>, along with the caption and filter used (if applicable).");
+				    	break;
+			    	case (text === "np"):
+			    		bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Last.fm module!" + bold + " Usage: " + reset + ".np (with no other parameters) returns your currently playing or most recently scrobbled track on last.fm (you must be in the bot's database for this function to work!). Entering .np <username> returns the currently playing or most recently scrobbled track for <username> on last.fm.");
+			    		break;
+		    		case (text === "charts"):
+			    		bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Last.fm module!" + bold + " Usage: " + reset + ".charts (with no other parameters) returns your top five most played artists in the last seven days on last.fm (you must be in the bot's database for this function to work!). Entering .charts <username> returns the top five most played artists in the last seven days for <username> on last.fm.");
+			    		break;
+		    		case (text === "addlastfm"):
+			    		bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Last.fm module!" + bold + " Usage: " + reset + ".addlastfm <username> stores your hostname and current IRC handle in the bot's database for usage with the .np, .charts, and .compare commands. You must be identified/authenticated on Snoonet for this feature to be of any significant usefulness.");
+			    		break;
+		    		case (text === "compare"):
+			    		bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Last.fm module!" + bold + " Usage: " + reset + ".compare <username> calculates your musical compatibility with <username> using the last.fm tasteometer. .compare <username1> <username2> calculates the musical compatibility between <username1> and <username2> using the last.fm tasteometer.");
+			    		break;
+					case (text === "similar"):
+			    		bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Last.fm module!" + bold + " Usage: " + reset + ".similar <artist> returns a list of similar artists and a percentage value of how closely the artists match, according to last.fm.");
+			    		break;
+				  	default:
+				    	bot.irc.privmsg(message.target, text + " is not a valid command!");
+				}
+			}
+			break;
+		// twitter
+		case ((message.message).search("\\.tw ") === 0):
+			var text = (message.message).replace(".tw ", "");
+			t.get("statuses/user_timeline", {screen_name: text, count: 1}, function (err, data, response) {
+				if(data === undefined) {
+					bot.irc.privmsg(message.target, "Twitter " + cyan + bold + "| " + reset + bold + text + reset + " is not a valid Twitter handle!");
+				} else if(data[0] === undefined) {
+					bot.irc.privmsg(message.target, "Twitter " + cyan + bold + "| " + reset + bold + text + reset + " hasn't tweeted yet!");
+				} else {
+					bot.irc.privmsg(message.target, "Twitter " + cyan + bold + "| " + bold + reset + "Most recent tweet by " + bold + data[0].user.name + bold + " "  + "(" + bold + "@" + data[0].user.screen_name + bold + ")" + bold + cyan + " | " + bold + reset + data[0].text + cyan + bold + " | " + bold + reset + data[0].created_at);
+				}
+			});
+			break;
+		// instagram
+		case ((message.message).search("\\.ig ") === 0):
+			var text = (message.message).replace(".ig ", "");
+			ig.user_search(text, {count: 1}, function(err, users, limit) {
+				if(users.length > 0 && (users[0].username).toUpperCase() === text.toUpperCase()) {
+					ig.user_media_recent(users[0].id, {count: 1}, function(err, medias, pagination, limit) {
+						if(medias[0].caption !== null) {
+							bot.irc.privmsg(message.target, "Instagram " + lightBlue + bold + "| " + reset + "Most recent post by " + bold + text + " (" + medias[0].user.full_name + ")" + lightBlue + " | " + reset + medias[0].caption.text + " " + (medias[0].link).replace("instagram.com", "instagr.am") + lightBlue + bold + " | " + reset + "Filter: " + medias[0].filter);
+						} else {
+							bot.irc.privmsg(message.target, "Instagram " + lightBlue + bold + "| " + reset + "Most recent post by " + bold + text + " (" + medias[0].user.full_name + ")" + lightBlue + " | " + reset + "No caption " + (medias[0].link).replace("instagram.com", "instagr.am") + lightBlue + bold + " | " + reset + "Filter: " + medias[0].filter);
+						}
+					});
+				} else {
+					bot.irc.privmsg(message.target, "Instagram " + lightBlue + bold + "| " + bold + reset + bold + text + bold + " is not a registered user on Instagram!");
+				}
+			});
+			break;
+		// .similar
+		case ((message.message).search("\\.similar ") === 0):
+			var text = (message.message).replace(".similar ", "");
+			lastfm.request("artist.getSimilar", {
+				artist: text,
+				autocorrect: 1,
+				limit: 5,
+				handlers: {
+					success: function(data) {
+						if((data.similarartists).length < 5) {
+								var x = (data.similarartists).length;
+							} else {
+								x = 5;
+							}
+						var charts = [];
+							for(i = 0; i < x; i++) {
+								charts.push(data.similarartists.artist[i].name + " (" + (data.similarartists.artist[i].match*100).toFixed(2) + "% match" + ")");
+							}
+						bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + "Artists similar to " + bold + text + lightRed + " | " + reset + charts.join(", "));
+					},
+					error: function(error) {
+						bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + bold + reset + bold + text + bold + " is not a valid artist on Last.fm!");
+					}
+				}
+			});
+			break;
+		// greeting
+		case ((message.message).indexOf("hi") > -1):
+			bot.irc.privmsg(message.target, "(⊙ ◡ ⊙)");
+			break;
+		default:
+			break;
+	}
+});
+
+// last.fm
 
 var lastfmdb = "./lastfmdb.json";
 var hostsAndAccounts = {};
@@ -192,6 +207,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 						});
 						bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + "User " + bold + text + bold + reset + " is now associated with hostname " + bold + message.hostname + reset + " and nickname " + message.nickname);
 					} else {
+						nicks = [];
 						nicks.push(message.nickname);
 						hostsAndAccounts[message.hostname] = {
 							"lfm": text,
@@ -280,7 +296,9 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 				handlers: {
 					success: function(data) {
 						var charts = [];
-						if((data.topartists.artist).length < 5) {
+						if((data.topartists.artist).length === undefined) {
+							charts.push(data.topartists.artist.name + " (" + data.topartists.artist.playcount + ")");
+						} else if((data.topartists.artist).length < 5) {
 							var x = (data.topartists.artist).length;
 						} else {
 							x = 5;
@@ -330,7 +348,6 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 		var name2 = (message.message).replace(".compare ", "");
 		var myArray = (message.message).split(" ");
 		myArray.splice(0, 1);
-		console.log(myArray.length);
 		var hostess = JSON.stringify(hostsAndAccounts);
 		function compare(handle1, handle2) {
 			lastfm.request("tasteometer.compare", {
@@ -379,12 +396,13 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 			});
 		}
 		if(myArray.length != 2) {
-			if(hostess.search(name1) > -1 || hostess.search(name2) > -1) {
+			if((hostess.toUpperCase()).search(name1.toUpperCase()) > -1 || (hostess.toUpperCase()).search(name2.toUpperCase()) > -1) {
+				console.log("HI");
 				for(var i = 0; i < hostNames.length; i++) {
-					if((JSON.stringify(hostsAndAccounts[hostNames[i]].nicks)).search(name1) > -1) {
+					if(((JSON.stringify(hostsAndAccounts[hostNames[i]].nicks)).toUpperCase()).search(name1.toUpperCase()) > -1) {
 						name1 = hostsAndAccounts[hostNames[i]].lfm;
 					}
-					if((JSON.stringify(hostsAndAccounts[hostNames[i]].nicks)).search(name2) > -1) {
+					if(((JSON.stringify(hostsAndAccounts[hostNames[i]].nicks)).toUpperCase()).search(name2.toUpperCase()) > -1) {
 						name2 = hostsAndAccounts[hostNames[i]].lfm;
 					}
 				}
@@ -394,14 +412,12 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 		}  else if(myArray.length === 2) {
 			name1 = myArray[0];
 			name2 = myArray[1];
-			console.log(hostess.search(name1) > -1);
-			console.log(hostess.search(name2) > -1);
-			if(hostess.search(name1) > -1 || hostess.search(name2) > -1) {
+			if((hostess.toUpperCase()).search(name1.toUpperCase()) > -1 || (hostess.toUpperCase).search(name2.toUpperCase()) > -1) {
 				for(var i = 0; i < hostNames.length; i++) {
-					if((JSON.stringify(hostsAndAccounts[hostNames[i]].nicks)).search(name1) > -1) {
+					if((JSON.stringify(hostsAndAccounts[hostNames[i]].nicks)).toUpperCase().search(name1.toUpperCase()) > -1) {
 						name1 = hostsAndAccounts[hostNames[i]].lfm;
 					}
-					if((JSON.stringify(hostsAndAccounts[hostNames[i]].nicks)).search(name2) > -1) {
+					if((JSON.stringify(hostsAndAccounts[hostNames[i]].nicks)).toUpperCase().search(name2.toUpperCase()) > -1) {
 						name2 = hostsAndAccounts[hostNames[i]].lfm;
 					}
 				}
@@ -433,35 +449,6 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 // 		});
 // 	}
 // });
-
-// .similar
-api.hookEvent("orcatail", "privmsg", function(message) {
-	if((message.message).search("\\.similar ") === 0) {
-		var text = (message.message).replace(".similar ", "");
-		lastfm.request("artist.getSimilar", {
-			artist: text,
-			autocorrect: 1,
-			limit: 5,
-			handlers: {
-				success: function(data) {
-					if((data.similarartists).length < 5) {
-							var x = (data.similarartists).length;
-						} else {
-							x = 5;
-						}
-					var charts = [];
-						for(i = 0; i < x; i++) {
-							charts.push(data.similarartists.artist[i].name + " (" + (data.similarartists.artist[i].match*100).toFixed(2) + "% match" + ")");
-						}
-					bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + "Artists similar to " + bold + text + lightRed + " | " + reset + charts.join(", "));
-				},
-				error: function(error) {
-					bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + bold + reset + bold + text + bold + " is not a valid artist on Last.fm!");
-				}
-			}
-		});
-	}
-});
 
 // hitbox live updates
 
