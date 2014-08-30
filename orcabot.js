@@ -125,7 +125,9 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 			ig.user_search(text, {count: 1}, function(err, users, limit) {
 				if(users.length > 0 && (users[0].username).toUpperCase() === text.toUpperCase()) {
 					ig.user_media_recent(users[0].id, {count: 1}, function(err, medias, pagination, limit) {
-						if(medias[0].caption !== null) {
+						if(medias === undefined) {
+							bot.irc.privmsg(message.target, "Instagram " + lightBlue + bold + "| " + reset + "User " + bold + users[0].username + reset + " has no photos to show or has a private account!");
+						} else if(medias[0].caption !== null) {
 							bot.irc.privmsg(message.target, "Instagram " + lightBlue + bold + "| " + reset + "Most recent post by " + bold + text + " (" + medias[0].user.full_name + ")" + lightBlue + " | " + reset + medias[0].caption.text + " " + (medias[0].link).replace("instagram.com", "instagr.am") + lightBlue + bold + " | " + reset + "Filter: " + medias[0].filter);
 						} else {
 							bot.irc.privmsg(message.target, "Instagram " + lightBlue + bold + "| " + reset + "Most recent post by " + bold + text + " (" + medias[0].user.full_name + ")" + lightBlue + " | " + reset + "No caption " + (medias[0].link).replace("instagram.com", "instagr.am") + lightBlue + bold + " | " + reset + "Filter: " + medias[0].filter);
@@ -162,12 +164,15 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 				}
 			});
 			break;
-		// greeting
-		case ((message.message).indexOf("hi") > -1):
-			bot.irc.privmsg(message.target, "(⊙ ◡ ⊙)");
-			break;
 		default:
 			break;
+	}
+});
+
+// greeting
+api.hookEvent("orcatail", "privmsg", function(message) {
+	if((message.message).indexOf("hi") > -1) {
+		bot.irc.privmsg(message.target, "(⊙ ◡ ⊙)");
 	}
 });
 
@@ -427,7 +432,6 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 		}
 	}
 });
-
 
 // get artist info <is truncated at ~440 characters
 // api.hookEvent("orcatail", "privmsg", function(message) {
