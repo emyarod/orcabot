@@ -7,7 +7,7 @@ var keys = require("./opendoors");
 var fs = require("fs");
 var http = require("http");
 var factory = require("irc-factory"),
-    api = new factory.Api();
+	api = new factory.Api();
 var Entities = require("html-entities").AllHtmlEntities;
 var twit = require("twit");
 var LastFmNode = require("lastfm").LastFmNode;
@@ -17,11 +17,11 @@ var entities = new Entities();
 
 // bot name
 var bot = api.createClient("orcatail", {
-    nick: config.nick,
-    user: config.user,
-    realname: config.realname,
-    server: config.server,
-    password: config.password
+  nick: config.nick,
+  user: config.user,
+  realname: config.realname,
+  server: config.server,
+  password: config.password
 });
 
 api.hookEvent("orcatail", "registered", function(message) {
