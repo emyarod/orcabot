@@ -6,12 +6,17 @@ var keys = require("./opendoors");
 // get node modules
 var fs = require("fs");
 var http = require("http");
+var request = require("request");
+var cheerio = require("cheerio");
 var factory = require("irc-factory"),
 	api = new factory.Api();
 var Entities = require("html-entities").AllHtmlEntities;
 var twit = require("twit");
 var LastFmNode = require("lastfm").LastFmNode;
 var ig = require("instagram-node").instagram();
+var google = require("googleapis");
+var customsearch = google.customsearch("v1");
+var urlshortener = google.urlshortener("v1");
 
 var entities = new Entities();
 
@@ -70,16 +75,23 @@ var lastfm = new LastFmNode({
 // modules
 api.hookEvent("orcatail", "privmsg", function(message) {
 	switch(true) {
+		// greeting
+		case ((message.message).indexOf("hi") > -1):
+			bot.irc.privmsg(message.target, "(⊙ ◡ ⊙)");
+			break;
 		// help
 		case (message.message === ".help" || (message.message).search(".help ") === 0):
 			if(message.message === ".help") {
-				bot.irc.privmsg(message.target, "Available commands: g, tw, ig, np, charts, addlastfm, compare, similar. Type \".help <command>\" for more information about a command!");
+				bot.irc.privmsg(message.target, "Available commands: g, url, tw, ig, np, charts, addlastfm, compare, similar. Type \".help <command>\" for more information about a command!");
 			} else if((message.message).search(".help ") === 0) {
 				var text = (message.message).replace(".help ", "");
 				switch(true) {
 				  	case (text === "g"):
-				    	bot.irc.privmsg(message.target, "not 100%");
+				    	bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Google search!" + bold + " Usage: " + reset + ".g <search term(s)> will return the top Google search result, as well as a shortlink to the remaining search results.");
 				    	break;
+			    	case (text === "url"):
+			    		bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Link shortener!" + bold + " Usage: " + reset + ".url <valid link> will return a shortened link.");
+			    		break;
 			    	case (text === "tw"):
 				    	bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Twitter module!" + bold + " Usage: " + reset + ".tw <username> will return the most recent tweet by <username>.");
 				    	break;
@@ -105,6 +117,46 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 				    	bot.irc.privmsg(message.target, text + " is not a valid command!");
 				}
 			}
+			break;
+		// google cse
+		case ((message.message).search("\\.g ") === 0):
+			var text = (message.message).replace(".g ", "");
+			customsearch.cse.list({cx: keys.googleCX, q: text, auth: keys.googleAPIKey}, function(err, resp) {
+				if (err) {
+					console.log(err);
+					return;
+				}
+				if (resp.searchInformation.formattedTotalResults == 0) {
+					bot.irc.privmsg(message.target, "No results found!");
+				} else if (resp.items && resp.items.length > 0) {
+					var searchResults = "https://www.google.com/?gws_rd=ssl#q=" + text.replace(/ /g, "+");
+					var shortlink;
+					// shorten search results url
+					urlshortener.url.insert({ resource: { longUrl: searchResults } }, function(err, result) {
+						if(err) {
+							console.log(err);
+							bot.irc.privmsg(message.target, entities.decode(resp.items[0].title).replace(/<(?:.|\n)*?>/gm, "").replace(/\s+/g, " ").trim() + darkBlue + bold + " | " + reset + entities.decode(resp.items[0].snippet).replace(/<(?:.|\n)*?>/gm, "").replace(/\s+/g, " ").trim() + darkBlue + bold + " | " + reset + resp.items[0].link + darkBlue + bold + " | " + reset + "more results: " + searchResults);
+						} else {
+							bot.irc.privmsg(message.target, entities.decode(resp.items[0].title).replace(/<(?:.|\n)*?>/gm, "").replace(/\s+/g, " ").trim() + darkBlue + bold + " | " + reset + entities.decode(resp.items[0].snippet).replace(/<(?:.|\n)*?>/gm, "").replace(/\s+/g, " ").trim() + darkBlue + bold + " | " + reset + resp.items[0].link + darkBlue + bold + " | " + reset + "more results: " + result.id);
+						}
+					});
+				}
+			});
+			break;
+		// link shortener
+		case ((message.message).search("\\.url ") === 0):
+			var text = (message.message).replace(".url ", "").replace(/[^A-Za-z 0-9 \.,\?""!@#\$%\^&\*\(\)-_=\+;:<>\/\\\|\}\{\[\]`~]*/g, "");
+			if(text.indexOf("01") === 0) {
+				text = text.replace("01", "");
+			}
+			urlshortener.url.insert({ resource: { longUrl: text } }, function(err, result) {
+				if(err) {
+					bot.irc.privmsg(message.target, "There was an error in creating your shortlink!");
+					console.log(err);
+				} else {
+					bot.irc.privmsg(message.target, "shortlink: " + result.id);
+				}
+			});
 			break;
 		// twitter
 		case ((message.message).search("\\.tw ") === 0):
@@ -166,13 +218,6 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 			break;
 		default:
 			break;
-	}
-});
-
-// greeting
-api.hookEvent("orcatail", "privmsg", function(message) {
-	if((message.message).indexOf("hi") > -1) {
-		bot.irc.privmsg(message.target, "(⊙ ◡ ⊙)");
 	}
 });
 
@@ -406,9 +451,13 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 				for(var i = 0; i < hostNames.length; i++) {
 					if(((JSON.stringify(hostsAndAccounts[hostNames[i]].nicks)).toUpperCase()).search(name1.toUpperCase()) > -1) {
 						name1 = hostsAndAccounts[hostNames[i]].lfm;
+						console.log(name1);
+						console.log("name1");
 					}
 					if(((JSON.stringify(hostsAndAccounts[hostNames[i]].nicks)).toUpperCase()).search(name2.toUpperCase()) > -1) {
 						name2 = hostsAndAccounts[hostNames[i]].lfm;
+						console.log(name2);
+						console.log("name2");
 					}
 				}
 			}
@@ -421,9 +470,11 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 				for(var i = 0; i < hostNames.length; i++) {
 					if((JSON.stringify(hostsAndAccounts[hostNames[i]].nicks)).toUpperCase().search(name1.toUpperCase()) > -1) {
 						name1 = hostsAndAccounts[hostNames[i]].lfm;
+						console.log(name1);
 					}
 					if((JSON.stringify(hostsAndAccounts[hostNames[i]].nicks)).toUpperCase().search(name2.toUpperCase()) > -1) {
 						name2 = hostsAndAccounts[hostNames[i]].lfm;
+						console.log(name2);
 					}
 				}
 			}
@@ -453,6 +504,34 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 // 		});
 // 	}
 // });
+
+// api.hookEvent("orcatail", "privmsg", function(message) {
+// 	if((message.message).search("http://") > -1) {
+// 		http.get()
+// 	}
+// });
+
+// http.get("http://blog.koreaboo.com", function(res) {
+//   console.log("Got response: " + res.statusCode);
+//   res.on('data', function (chunk) {
+//     var str = chunk.toString();
+// 		var re = new RegExp("(<\s*title[^>]*>(.+?)<\s*/\s*title)\>", "g")
+// 		console.log(str.match(re));
+//   });
+// }).on('error', function(e) {
+//   console.log("Got error: " + e.message);
+// });
+
+// request("http://blog.koreaboo.com", function(err, res, html) {
+// 	if(!err) {
+// 		console.log(res.statusCode);
+// 		var $ = cheerio.load(html);
+// 		// console.log($);
+// 		console.log($("head").children(2));
+// 	} else {
+// 		console.log(err);
+// 	}
+// })
 
 // hitbox live updates
 
