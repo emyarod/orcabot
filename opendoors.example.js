@@ -7,6 +7,8 @@ var opendoors = {
 	lfmSecret: "lfmSecret",
 	igClientId: "igClientId",
 	igClientSecret: "igClientSecret",
+	googleCX: "INSERT YOUR CUSTOM SEARCH ENGINE ID here",
+	googleAPIKey: "INSERT YOUR API KEY HERE",
 };
 
 module.exports = opendoors;
