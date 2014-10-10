@@ -71,6 +71,16 @@ var lastfm = new LastFmNode({
 	api_key: keys.lfmApiKey,
 	secret: keys.lfmSecret
 });
+var lastfmdb = "./lastfmdb.json";
+var hostsAndAccounts = {};
+var hostNames = {};
+var nicks = [];
+
+fs.readFile(lastfmdb, "utf8", function(err, data) {
+	if(err) throw err;
+	hostsAndAccounts = JSON.parse(data);
+	hostNames = Object.keys(hostsAndAccounts);
+});
 
 // modules
 api.hookEvent("orcatail", "privmsg", function(message) {
@@ -118,8 +128,8 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 				}
 			}
 			break;
-		// google cse
-		case ((message.message).search("\\.g ") === 0):
+		// google custom search engine (cse)
+		case ((message.message).search(".g ") === 0):
 			var text = (message.message).replace(".g ", "");
 			customsearch.cse.list({cx: keys.googleCX, q: text, auth: keys.googleAPIKey}, function(err, resp) {
 				if (err) {
@@ -144,7 +154,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 			});
 			break;
 		// link shortener
-		case ((message.message).search("\\.url ") === 0):
+		case ((message.message).search(".url ") === 0):
 			var text = (message.message).replace(".url ", "").replace(/[^A-Za-z 0-9 \.,\?""!@#\$%\^&\*\(\)-_=\+;:<>\/\\\|\}\{\[\]`~]*/g, "");
 			if(text.indexOf("01") === 0) {
 				text = text.replace("01", "");
@@ -159,7 +169,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 			});
 			break;
 		// twitter
-		case ((message.message).search("\\.tw ") === 0):
+		case ((message.message).search(".tw ") === 0):
 			var text = (message.message).replace(".tw ", "");
 			t.get("statuses/user_timeline", {screen_name: text, count: 1}, function (err, data, response) {
 				if(data === undefined) {
@@ -172,7 +182,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 			});
 			break;
 		// instagram
-		case ((message.message).search("\\.ig ") === 0):
+		case ((message.message).search(".ig ") === 0):
 			var text = (message.message).replace(".ig ", "");
 			ig.user_search(text, {count: 1}, function(err, users, limit) {
 				if(users.length > 0 && (users[0].username).toUpperCase() === text.toUpperCase()) {
@@ -191,7 +201,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 			});
 			break;
 		// .similar
-		case ((message.message).search("\\.similar ") === 0):
+		case ((message.message).search(".similar ") === 0):
 			var text = (message.message).replace(".similar ", "");
 			lastfm.request("artist.getSimilar", {
 				artist: text,
@@ -216,277 +226,263 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 				}
 			});
 			break;
+		// add to db
+		case ((message.message).search(".addlastfm ") === 0):
+			var text = (message.message).replace(".addlastfm ", "");
+			lastfm.request("user.getInfo", {
+				user: text,
+				handlers: {
+					success: function(data) {
+						switch(true) {
+							case (hostNames.indexOf(message.hostname) > -1 && (hostsAndAccounts[message.hostname].nicks).indexOf(message.nickname) > -1):
+									bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + bold + message.nickname + bold + " (" + message.hostname + ")" + " already has an associated Last.fm account (http://www.last.fm/user/" + Object.getOwnPropertyDescriptor(hostsAndAccounts[message.hostname], "lfm").value + reset + ")!");
+									break;
+							case (hostNames.indexOf(message.hostname) > -1 && (hostsAndAccounts[message.hostname].nicks).indexOf(message.nickname) === -1):
+								nicks = (hostsAndAccounts[message.hostname].nicks);
+								nicks.push(message.nickname);
+								hostsAndAccounts[message.hostname] = {
+									"lfm": text,
+									"nicks": nicks
+								};
+								fs.writeFile(lastfmdb, JSON.stringify(hostsAndAccounts, null, 4), function (err) {
+									if(err) throw err;
+									hostNames = Object.keys(hostsAndAccounts);
+								});
+								bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + "User " + bold + text + bold + reset + " is now associated with hostname " + bold + message.hostname + reset + " and nickname " + message.nickname);
+								fs.readFile(lastfmdb, "utf8", function(err, data) {
+									if(err) throw err;
+									hostsAndAccounts = JSON.parse(data);
+									hostNames = Object.keys(hostsAndAccounts);
+								});
+								nicks = [];
+								break;
+							default:
+								nicks.push(message.nickname);
+								hostsAndAccounts[message.hostname] = {
+									"lfm": text,
+									"nicks": nicks
+								};
+								fs.writeFile(lastfmdb, JSON.stringify(hostsAndAccounts, null, 4), function (err) {
+									if(err) throw err;
+									hostNames = Object.keys(hostsAndAccounts);
+								});
+								bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + "User " + bold + text + bold + reset + " is now associated with hostname " + bold + message.hostname + reset + " and nickname " + message.nickname);
+								fs.readFile(lastfmdb, "utf8", function(err, data) {
+									if(err) throw err;
+									hostsAndAccounts = JSON.parse(data);
+									hostNames = Object.keys(hostsAndAccounts);
+								});
+								nicks = [];
+								break;
+						}
+					},
+					error: function(error) {
+						bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + bold + reset + bold + text + bold + " is not a registered username on Last.fm!");
+					}
+				}
+			});
+			break;
+		// now playing .np <self/user/registered handle>
+		case ((message.message).search(".np") === 0):
+			var text;
+			var hostess = JSON.stringify(hostsAndAccounts);
+			function nowplaying(handle) {
+				lastfm.request("user.getRecentTracks", {
+					user: handle,
+					handlers: {
+						success: function(data) {
+							if(data.recenttracks.track[0]["@attr"] === undefined) {
+								if(data.recenttracks.track[0].album['#text'] !== "") {
+									bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + bold + handle + reset + " last listened to " + "\"" + data.recenttracks.track[0].name + "\"" + " by " + data.recenttracks.track[0].artist["#text"] + " from " + underline + data.recenttracks.track[0].album["#text"] + underline + lightRed + bold + " | " + reset + "http://www.last.fm/user/" + handle + "/now");
+								} else {
+									bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + bold + handle + reset + " last listened to " + "\"" + data.recenttracks.track[0].name + "\"" + " by " + data.recenttracks.track[0].artist["#text"] + lightRed + bold + " | " + reset + "http://www.last.fm/user/" + handle + "/now");
+								}
+							} else if(data.recenttracks.track[0].album['#text'] !== "") {
+								bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + bold + handle + reset + " is listening to " + "\"" + data.recenttracks.track[0].name + "\"" + " by " + data.recenttracks.track[0].artist["#text"] + " from " + underline + data.recenttracks.track[0].album["#text"] + underline + lightRed + bold + " | " + reset + "http://www.last.fm/user/" + handle + "/now");
+							} else {
+								bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + bold + handle + reset + " is listening to " + "\"" + data.recenttracks.track[0].name + "\"" + " by " + data.recenttracks.track[0].artist["#text"] + lightRed + bold + " | " + reset + "http://www.last.fm/user/" + handle + "/now");
+							}
+						},
+						error: function(error) {
+							bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + bold + reset + bold + handle + bold + " is not a registered username on Last.fm!");
+						}
+					}
+				});
+			}
+			switch(true) {
+				case((message.message).search(".np ") === 0):
+					text = (message.message).replace(".np ", "");
+					if(hostess.indexOf(text) > -1) {
+						for(var i = 0; i < hostNames.length; i++) {
+							if((JSON.stringify(hostsAndAccounts[hostNames[i]].nicks)).search(text) > -1) {
+								text = hostsAndAccounts[hostNames[i]].lfm;
+								break;
+							}
+						}
+					}
+					nowplaying(text);
+					break;
+				case(message.message === ".np"):
+					if(hostNames.indexOf(message.hostname) > -1) {
+						text = Object.getOwnPropertyDescriptor(hostsAndAccounts[message.hostname], "lfm").value;
+						nowplaying(text);
+					}  else {
+						bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + bold + message.nickname + bold + " doesn't exist in my database! Please use " + "\"" + ".addlastfm <last.fm username>" + "\"" + " to add yourself the db. You must be identified on " + config.server + ".");
+					}
+					break;
+				default:
+					break;
+			}
+			break;
+		// weekly charts .charts <self/user/registered handle>
+		case ((message.message).search(".charts") === 0):
+			var text;
+			var hostess = JSON.stringify(hostsAndAccounts);
+			function getCharts(handle) {
+				lastfm.request("user.getTopArtists", {
+					user: handle,
+					period: "7day",
+					limit: 5,
+					handlers: {
+						success: function(data) {
+							var charts = [];
+							if((data.topartists.artist).length === undefined) {
+								charts.push(data.topartists.artist.name + " (" + data.topartists.artist.playcount + ")");
+							} else if((data.topartists.artist).length < 5) {
+								var x = (data.topartists.artist).length;
+							} else {
+								x = 5;
+							}
+							for(i = 0; i < x; i++) {
+								charts.push(data.topartists.artist[i].name + " (" + data.topartists.artist[i].playcount + ")");
+							}
+							bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + "Weekly charts for " + bold + handle + lightRed + " | " + reset + charts.join(", "));
+						},
+						error: function(error) {
+							bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + bold + reset + bold + handle + bold + " is not a registered username on Last.fm!");
+						}
+					}
+				});
+			}
+			switch(true) {
+				case((message.message).search(".charts ") === 0):
+					text = (message.message).replace(".charts ", "");
+					if(hostess.indexOf(text) > -1) {
+						for(var i = 0; i < hostNames.length; i++) {
+							if((JSON.stringify(hostsAndAccounts[hostNames[i]].nicks)).search(text) > -1) {
+								text = hostsAndAccounts[hostNames[i]].lfm;
+								break;
+							}
+						}
+					}
+					getCharts(text);
+					break;
+				case((message.message) === ".charts"):
+					if(hostNames.indexOf(message.hostname) > -1) {
+						text = Object.getOwnPropertyDescriptor(hostsAndAccounts[message.hostname], "lfm").value;
+						getCharts(text);
+					} else {
+						bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + bold + message.nickname + bold + " doesn't exist in my database! Please use " + "\"" + ".addlastfm <last.fm username>" + "\"" + " to add yourself the db. You must be identified on " + config.server + ".");
+					}
+					break;
+				default:
+					break;
+			}
+			break;
+		// compare musical compatibility .compare <user/registered handle>
+		case ((message.message).search(".compare ") === 0):
+			var name1 = message.nickname;
+			var name2 = (message.message).replace(".compare ", "");
+			var myArray = (message.message).split(" ");
+			myArray.splice(0, 1);
+			var hostess = JSON.stringify(hostsAndAccounts);
+			function compare(handle1, handle2) {
+				lastfm.request("tasteometer.compare", {
+					type1: "user",
+					value1: handle1,
+					type2: "user",
+					value2: handle2,
+					handlers: {
+						success: function(data) {
+							var score = (data.comparison.result.score * 100).toFixed(2);
+							var adjective = "";
+							switch(true) {
+							  	case (score >= 90):
+							    	adjective = lightRed + "SUPER" + reset;
+							    	break;
+						    	case (90 > score && score >= 70):
+							    	adjective = orange + "VERY HIGH" + reset;
+							    	break;
+						    	case (70 > score && score >= 50):
+							    	adjective = darkGreen + "HIGH" + reset;
+							    	break;
+						    	case (50 > score && score >= 30):
+						    		adjective = magenta + "MEDIUM" + reset;
+						    		break;
+					    		case (30 > score && score >= 10):
+						    		adjective = gray + "LOW" + reset;
+						    		break;
+							  	default:
+							    	adjective = lightGray + "VERY LOW" + reset;
+							}
+							if((data.comparison.result.artists.artist).length < 5) {
+									var x = (data.comparison.result.artists.artist).length;
+								} else {
+									x = 5;
+								}
+							var similarArtists = [];
+							for(i = 0; i < x; i++) {
+								similarArtists.push(data.comparison.result.artists.artist[i].name);
+							}
+							bot.irc.privmsg(message.target, "Last.fm" + bold + lightRed + " | " + bold + reset + "Users " + bold + name1 + reset + " and " + bold + name2 + reset + " have " + bold + adjective + reset + " compatibility (similarity " + score + "%)" + darkRed + bold + " | " + reset + "Similar artists include: " + similarArtists.join(", "));
+						},
+						error: function(error) {
+							bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + bold + reset + "Either " + bold + name1 + reset + " or " + bold + name2 + bold + " is not a registered username on Last.fm!");
+						}
+					}
+				});
+			}
+			switch(true) {
+				case (myArray.length != 2):
+					if((hostess.toUpperCase()).search(name1.toUpperCase()) > -1 || (hostess.toUpperCase()).search(name2.toUpperCase()) > -1) {
+						for(var i = 0; i < hostNames.length; i++) {
+							if(((JSON.stringify(hostsAndAccounts[hostNames[i]].nicks)).toUpperCase()).search(name1.toUpperCase()) > -1) {
+								name1 = hostsAndAccounts[hostNames[i]].lfm;
+							}
+							if(((JSON.stringify(hostsAndAccounts[hostNames[i]].nicks)).toUpperCase()).search(name2.toUpperCase()) > -1) {
+								name2 = hostsAndAccounts[hostNames[i]].lfm;
+							}
+						}
+					}
+					compare(name1, name2);
+					break;
+				case (myArray.length === 2):
+					name1 = myArray[0];
+					name2 = myArray[1];
+					if((hostess.toUpperCase()).search(name1.toUpperCase()) > -1 || (hostess.toUpperCase).search(name2.toUpperCase()) > -1) {
+						for(var i = 0; i < hostNames.length; i++) {
+							if((JSON.stringify(hostsAndAccounts[hostNames[i]].nicks)).toUpperCase().search(name1.toUpperCase()) > -1) {
+								name1 = hostsAndAccounts[hostNames[i]].lfm;
+							}
+							if((JSON.stringify(hostsAndAccounts[hostNames[i]].nicks)).toUpperCase().search(name2.toUpperCase()) > -1) {
+								name2 = hostsAndAccounts[hostNames[i]].lfm;
+							}
+						}
+					}
+					compare(name1, name2);
+					break;
+				default:
+					break;
+			}
+			break;
 		default:
 			break;
 	}
 });
 
-// last.fm
-
-var lastfmdb = "./lastfmdb.json";
-var hostsAndAccounts = {};
-var hostNames = {};
-var nicks = [];
-
-fs.readFile(lastfmdb, "utf8", function(err, data) {
-	if(err) throw err;
-	hostsAndAccounts = JSON.parse(data);
-	hostNames = Object.keys(hostsAndAccounts);
-});
-
-// add to db
-api.hookEvent("orcatail", "privmsg", function(message) {
-	if((message.message).search("\\.addlastfm ") === 0) {
-		var text = (message.message).replace(".addlastfm ", "");
-		lastfm.request("user.getInfo", {
-			user: text,
-			handlers: {
-				success: function(data) {
-					if(hostNames.indexOf(message.hostname) > -1 && (hostsAndAccounts[message.hostname].nicks).indexOf(message.nickname) > -1) {
-						bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + bold + message.nickname + bold + " (" + message.hostname + ")" + " already has an associated Last.fm account (http://www.last.fm/user/" + Object.getOwnPropertyDescriptor(hostsAndAccounts[message.hostname], "lfm").value + reset + ")!");
-					} else if (hostNames.indexOf(message.hostname) > -1 && (hostsAndAccounts[message.hostname].nicks).indexOf(message.nickname) === -1) {
-						nicks = (hostsAndAccounts[message.hostname].nicks);
-						nicks.push(message.nickname);
-						hostsAndAccounts[message.hostname] = {
-							"lfm": text,
-							"nicks": nicks
-						};
-						fs.writeFile(lastfmdb, JSON.stringify(hostsAndAccounts, null, 4), function (err) {
-							if(err) throw err;
-							hostNames = Object.keys(hostsAndAccounts);
-						});
-						bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + "User " + bold + text + bold + reset + " is now associated with hostname " + bold + message.hostname + reset + " and nickname " + message.nickname);
-					} else {
-						nicks = [];
-						nicks.push(message.nickname);
-						hostsAndAccounts[message.hostname] = {
-							"lfm": text,
-							"nicks": nicks
-						};
-						fs.writeFile(lastfmdb, JSON.stringify(hostsAndAccounts, null, 4), function (err) {
-							if(err) throw err;
-							hostNames = Object.keys(hostsAndAccounts);
-						});
-						bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + "User " + bold + text + bold + reset + " is now associated with hostname " + bold + message.hostname + reset + " and nickname " + message.nickname);
-					}
-				},
-				error: function(error) {
-					bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + bold + reset + bold + text + bold + " is not a registered username on Last.fm!");
-				}
-			}
-		});
-	}
-});
-
-// now playing .np <self/user/registered handle>
-api.hookEvent("orcatail", "privmsg", function(message) {
-	if((message.message).search("\\.np") === 0) {
-		var text;
-		var hostess = JSON.stringify(hostsAndAccounts);
-		function nowplaying(handle) {
-			lastfm.request("user.getRecentTracks", {
-				user: handle,
-				handlers: {
-					success: function(data) {
-						if(data.recenttracks.track[0]["@attr"] === undefined) {
-							if(data.recenttracks.track[0].album['#text'] !== "") {
-								bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + bold + handle + reset + " last listened to " + "\"" + data.recenttracks.track[0].name + "\"" + " by " + data.recenttracks.track[0].artist["#text"] + " from " + underline + data.recenttracks.track[0].album["#text"] + underline + lightRed + bold + " | " + reset + "http://www.last.fm/user/" + handle + "/now");
-							} else {
-								bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + bold + handle + reset + " last listened to " + "\"" + data.recenttracks.track[0].name + "\"" + " by " + data.recenttracks.track[0].artist["#text"] + lightRed + bold + " | " + reset + "http://www.last.fm/user/" + handle + "/now");
-							}
-						} else if(data.recenttracks.track[0].album['#text'] !== "") {
-							bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + bold + handle + reset + " is listening to " + "\"" + data.recenttracks.track[0].name + "\"" + " by " + data.recenttracks.track[0].artist["#text"] + " from " + underline + data.recenttracks.track[0].album["#text"] + underline + lightRed + bold + " | " + reset + "http://www.last.fm/user/" + handle + "/now");
-						} else {
-							bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + bold + handle + reset + " is listening to " + "\"" + data.recenttracks.track[0].name + "\"" + " by " + data.recenttracks.track[0].artist["#text"] + lightRed + bold + " | " + reset + "http://www.last.fm/user/" + handle + "/now");
-						}
-					},
-					error: function(error) {
-						bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + bold + reset + bold + handle + bold + " is not a registered username on Last.fm!");
-					}
-				}
-			});
-		}
-		switch(true) {
-			case((message.message).search("\\.np ") === 0):
-				text = (message.message).replace(".np ", "");
-				if(hostess.indexOf(text) > -1) {
-					for(var i = 0; i < hostNames.length; i++) {
-						if((JSON.stringify(hostsAndAccounts[hostNames[i]].nicks)).search(text) > -1) {
-							text = hostsAndAccounts[hostNames[i]].lfm;
-							break;
-						}
-					}
-				}
-				nowplaying(text);
-				break;
-			case(message.message === ".np"):
-				if(hostNames.indexOf(message.hostname) > -1) {
-					text = Object.getOwnPropertyDescriptor(hostsAndAccounts[message.hostname], "lfm").value;
-					nowplaying(text);
-				}  else {
-					bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + bold + message.nickname + bold + " doesn't exist in my database! Please use " + "\"" + ".addlastfm <last.fm username>" + "\"" + " to add yourself the db. You must be identified on " + config.server + ".");
-				}
-				break;
-			default:
-				return;
-		}
-	}
-});
-
-// weekly charts .charts <self/user/registered handle>
-api.hookEvent("orcatail", "privmsg", function(message) {
-	if((message.message).search("\\.charts") === 0) {
-		var text;
-		var hostess = JSON.stringify(hostsAndAccounts);
-		function getCharts(handle) {
-			lastfm.request("user.getTopArtists", {
-				user: handle,
-				period: "7day",
-				limit: 5,
-				handlers: {
-					success: function(data) {
-						var charts = [];
-						if((data.topartists.artist).length === undefined) {
-							charts.push(data.topartists.artist.name + " (" + data.topartists.artist.playcount + ")");
-						} else if((data.topartists.artist).length < 5) {
-							var x = (data.topartists.artist).length;
-						} else {
-							x = 5;
-						}
-						for(i = 0; i < x; i++) {
-							charts.push(data.topartists.artist[i].name + " (" + data.topartists.artist[i].playcount + ")");
-						}
-						bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + "Weekly charts for " + bold + handle + lightRed + " | " + reset + charts.join(", "));
-					},
-					error: function(error) {
-						bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + bold + reset + bold + handle + bold + " is not a registered username on Last.fm!");
-					}
-				}
-			});
-		}
-		switch(true) {
-			case((message.message).search("\\.charts ") === 0):
-				text = (message.message).replace(".charts ", "");
-				if(hostess.indexOf(text) > -1) {
-					for(var i = 0; i < hostNames.length; i++) {
-						if((JSON.stringify(hostsAndAccounts[hostNames[i]].nicks)).search(text) > -1) {
-							text = hostsAndAccounts[hostNames[i]].lfm;
-							break;
-						}
-					}
-				}
-				getCharts(text);
-				break;
-			case((message.message) === ".charts"):
-				if(hostNames.indexOf(message.hostname) > -1) {
-					text = Object.getOwnPropertyDescriptor(hostsAndAccounts[message.hostname], "lfm").value;
-					getCharts(text);
-				} else {
-					bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + bold + message.nickname + bold + " doesn't exist in my database! Please use " + "\"" + ".addlastfm <last.fm username>" + "\"" + " to add yourself the db. You must be identified on " + config.server + ".");
-				}
-				break;
-			default:
-				return;
-		}
-	}
-});
-
-// compare musical compatibility .compare <user/registered handle>
-api.hookEvent("orcatail", "privmsg", function(message) {
-	if((message.message).search("\\.compare ") === 0) {
-		var name1 = message.nickname;
-		var name2 = (message.message).replace(".compare ", "");
-		var myArray = (message.message).split(" ");
-		myArray.splice(0, 1);
-		var hostess = JSON.stringify(hostsAndAccounts);
-		function compare(handle1, handle2) {
-			lastfm.request("tasteometer.compare", {
-				type1: "user",
-				value1: handle1,
-				type2: "user",
-				value2: handle2,
-				handlers: {
-					success: function(data) {
-						var score = (data.comparison.result.score * 100).toFixed(2);
-						var adjective = "";
-						switch(true) {
-						  	case (score >= 90):
-						    	adjective = lightRed + "SUPER" + reset;
-						    	break;
-					    	case (90 > score && score >= 70):
-						    	adjective = orange + "VERY HIGH" + reset;
-						    	break;
-					    	case (70 > score && score >= 50):
-						    	adjective = darkGreen + "HIGH" + reset;
-						    	break;
-					    	case (50 > score && score >= 30):
-					    		adjective = magenta + "MEDIUM" + reset;
-					    		break;
-				    		case (30 > score && score >= 10):
-					    		adjective = gray + "LOW" + reset;
-					    		break;
-						  	default:
-						    	adjective = lightGray + "VERY LOW" + reset;
-						}
-						if((data.comparison.result.artists.artist).length < 5) {
-								var x = (data.comparison.result.artists.artist).length;
-							} else {
-								x = 5;
-							}
-						var similarArtists = [];
-						for(i = 0; i < x; i++) {
-							similarArtists.push(data.comparison.result.artists.artist[i].name);
-						}
-						bot.irc.privmsg(message.target, "Last.fm" + bold + lightRed + " | " + bold + reset + "Users " + bold + name1 + reset + " and " + bold + name2 + reset + " have " + bold + adjective + reset + " compatibility (similarity " + score + "%)" + darkRed + bold + " | " + reset + "Similar artists include: " + similarArtists.join(", "));
-					},
-					error: function(error) {
-						bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + bold + reset + "Either " + bold + name1 + reset + " or " + bold + name2 + bold + " is not a registered username on Last.fm!");
-					}
-				}
-			});
-		}
-		if(myArray.length != 2) {
-			if((hostess.toUpperCase()).search(name1.toUpperCase()) > -1 || (hostess.toUpperCase()).search(name2.toUpperCase()) > -1) {
-				console.log("HI");
-				for(var i = 0; i < hostNames.length; i++) {
-					if(((JSON.stringify(hostsAndAccounts[hostNames[i]].nicks)).toUpperCase()).search(name1.toUpperCase()) > -1) {
-						name1 = hostsAndAccounts[hostNames[i]].lfm;
-						console.log(name1);
-						console.log("name1");
-					}
-					if(((JSON.stringify(hostsAndAccounts[hostNames[i]].nicks)).toUpperCase()).search(name2.toUpperCase()) > -1) {
-						name2 = hostsAndAccounts[hostNames[i]].lfm;
-						console.log(name2);
-						console.log("name2");
-					}
-				}
-			}
-			compare(name1, name2);
-			return;
-		}  else if(myArray.length === 2) {
-			name1 = myArray[0];
-			name2 = myArray[1];
-			if((hostess.toUpperCase()).search(name1.toUpperCase()) > -1 || (hostess.toUpperCase).search(name2.toUpperCase()) > -1) {
-				for(var i = 0; i < hostNames.length; i++) {
-					if((JSON.stringify(hostsAndAccounts[hostNames[i]].nicks)).toUpperCase().search(name1.toUpperCase()) > -1) {
-						name1 = hostsAndAccounts[hostNames[i]].lfm;
-						console.log(name1);
-					}
-					if((JSON.stringify(hostsAndAccounts[hostNames[i]].nicks)).toUpperCase().search(name2.toUpperCase()) > -1) {
-						name2 = hostsAndAccounts[hostNames[i]].lfm;
-						console.log(name2);
-					}
-				}
-			}
-			compare(name1, name2);
-			return;
-		}
-	}
-});
-
 // get artist info <is truncated at ~440 characters
 // api.hookEvent("orcatail", "privmsg", function(message) {
-// 	if((message.message).search("\\.getinfo ") === 0) {
+// 	if((message.message).search(".getinfo ") === 0) {
 // 		text = (message.message).replace(".getinfo ", "");
 // 		lastfm.request("artist.getInfo", {
 // 			artist: text,
