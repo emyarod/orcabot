@@ -1,5 +1,35 @@
 #Orcabot
-this is a simple IRC bot :whale: :whale2:
+this is a simple node.js IRC bot :whale: :whale2:
+
+##Setup & Installation
+
+###Install [node.js](http://nodejs.org/) and [npm](https://npmjs.org/)
+
+```
+git clone https://github.com/joyent/node
+cd node
+./configure
+make
+make install
+```
+
+###Install dependencies
+```
+npm install orcabot
+```
+
+###Bot configuration
+
+Rename `channel.example.js` to `channel.js`, rename `opendoors.example.js` to `opendoors.js`, and edit the files accordingly.
+
+###Last.fm database setup
+
+Rename `lastfmdb.example.json` to `lastfmdb.json`. For information on how to store handles and user info in the .JSON, refer to the relevant section [below](https://github.com/emyarod/orcabot#adding-users-to-the-bots-database)
+
+###Running the bot
+```
+$ node orcabot
+```
 
 ##Usage
 
