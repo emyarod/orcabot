@@ -475,31 +475,36 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 					break;
 			}
 			break;
+		// get artist info <is truncated at ~440 characters
+		case ((message.message).search(".getinfo ") === 0):
+			text = (message.message).replace(".getinfo ", "");
+			lastfm.request("artist.getInfo", {
+				artist: text,
+				autocorrect: 1,
+				handlers: {
+					success: function(data) {
+						// strip html, strip whitespace, decode entities, trim
+						var reply = entities.decode(data.artist.bio.summary);
+						reply = reply.replace(/<(?:.|\n)*?>/gm, "").replace(/\s+/g, " ").trim();
+						if(reply.length > 400) {
+							reply = reply.substring(0, 400);
+							console.log(reply);
+							bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + reply + "... Read more on Last.fm.");
+						} else {
+							console.log(reply);
+							bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + reply);
+						}
+					},
+					error: function(error) {
+						bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + bold + reset + bold + text + bold + " is not a valid artist on Last.fm!");
+					}
+				}
+			});
+			break;
 		default:
 			break;
 	}
 });
-
-// get artist info <is truncated at ~440 characters
-// api.hookEvent("orcatail", "privmsg", function(message) {
-// 	if((message.message).search(".getinfo ") === 0) {
-// 		text = (message.message).replace(".getinfo ", "");
-// 		lastfm.request("artist.getInfo", {
-// 			artist: text,
-// 			autocorrect: 1,
-// 			handlers: {
-// 				success: function(data) {
-// 					// strip html, strip whitespace, decode entities, trim
-// 					var reply = entities.decode(data.artist.bio.summary);
-// 					bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + reset + reply.replace(/<(?:.|\n)*?>/gm, "").replace(/\s+/g, " ").trim());
-// 				},
-// 				error: function(error) {
-// 					bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + bold + reset + bold + text + bold + " is not a valid artist on Last.fm!");
-// 				}
-// 			}
-// 		});
-// 	}
-// });
 
 // api.hookEvent("orcatail", "privmsg", function(message) {
 // 	if((message.message).search("http://") > -1) {
