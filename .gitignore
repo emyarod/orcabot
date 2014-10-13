@@ -30,3 +30,4 @@ config.js
 lastfmdb.json
 opendoors.js
 channel.js
+streams.js
