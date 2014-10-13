@@ -536,7 +536,7 @@ var streams = require("./streams");
 
 function twitch (num) {
 	request("https://api.twitch.tv/kraken/streams/" + streams.csgo[num].user, function (error, response, body) {
-	  if (!error && response.statusCode == 200) {
+	  if (!error && response.statusCode === 200) {
 	  	var parse = JSON.parse(body);
 	  	if(parse.stream !== null) {
 	  		streams.csgo[num].isLive = 1;
