@@ -531,56 +531,76 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 	}
 });
 
-// hitbox live updates
+// twitch.tv listener
+
+var streams = require("./streams");
+
+function twitch (num) {
+	request("https://api.twitch.tv/kraken/streams/" + streams.csgo[num].user, function (error, response, body) {
+	  if (!error && response.statusCode == 200) {
+	  	var parse = JSON.parse(body);
+	  	if(parse.stream != null) {
+	  		streams.csgo[num].isLive = 1;
+	  		if(streams.csgo[num].sentFlag === 0) {
+	  			bot.irc.privmsg(channel.channels[0], "Twitch.tv" + magenta + " | " + reset + "\"" + parse.stream.channel.status + "\"" + magenta + " | " + reset  + bold + parse.stream.channel.display_name + reset + " is currently live and playing " + underline + parse.stream.channel.game + reset + " at " + parse.stream.channel.url);
+	  			streams.csgo[num].sentFlag = 1;
+	  		}
+	  		console.log(streams.csgo[num].user + " live live live");
+	  	} else {
+	  		streams.csgo[num].isLive = 0;
+	  		streams.csgo[num].sentFlag = 0;
+	  		console.log(streams.csgo[num].user + " not live");
+	  	}
+	  }
+	});
+}
+
+var counter = 0;
+
+function timeout() {
+	if(counter < streams.csgo.length) {
+		setTimeout(function () {
+	    twitch(counter);
+	    counter++;
+	    timeout();
+	  }, 1000);
+	} else {
+		counter = 0;
+		timeout();
+	}
+}
+
+timeout();
+
+// working shit
 
 // var isLive = 0;
 // var sentFlag = 0;
 
 // function timer() {
-// 	try{
-// 		http.get("http://api.hitbox.tv/media/live/SchismLock", function(res) {
-// 			res.setEncoding("utf8");
-// 			res.on("data", function(chunk) {
-// 				if(chunk === "no_media_found") {
-// 					console.log("no media found");
-// 					return;
-// 				}
-// 				chunk = JSON.parse(chunk);
-// 				console.log("parsed");
-// 				if(chunk.livestream[0].media_is_live === "1") {
-// 					isLive = 1;
-// 					console.log("live");
-// 					if(sentFlag === 0) {
-// 						console.log("lakdfjlasdkj");
-// 						if(chunk.livestream[0].team_name == null) {
-// 							api.hookEvent("orcatail", "registered", function(message) {
-// 								bot.irc.privmsg(channel.channels, "hitbox.tv " + lightGreen + "| " + reset + "\"" + chunk.livestream[0].media_status + "\" " + lightGreen + "| " + reset  + bold + chunk.livestream[0].channel.user_name + reset + " is currently live and playing " + chunk.livestream[0].category_name + " at " + chunk.livestream[0].channel.channel_link);
-// 								console.log("livelive");
-// 							});
-// 						} else {
-// 							api.hookEvent("orcatail", "registered", function(message) {
-// 								bot.irc.privmsg(channel.channels, "hitbox.tv " + lightGreen + "| " + reset + "\"" + chunk.livestream[0].media_status + "\" " + lightGreen + "| " + reset  + bold + chunk.livestream[0].channel.user_name + reset + " is currently live and playing " + chunk.livestream[0].category_name + " on " + chunk.livestream[0].team_name + " at " + chunk.livestream[0].channel.channel_link);
-// 								console.log("livelivelive");
-// 							});
-// 						}
-// 						sentFlag = 1;
-// 						console.log("sentFlag = 1")
-// 					}
-// 				} else {
-// 					sentFlag = 0;
-// 					console.log("not live");
-// 				}
-// 			});
-// 		}).on("error", function(error) {
-// 			console.log("Got error: " + error.message);
-// 		});
-// 	} catch(e) {
-// 		console.log(e);
-// 		console.log("hitbox");
-// 	}
+// 	request("https://api.twitch.tv/kraken/streams/sixfeetshort", function (error, response, body) {
+// 	  if (!error && response.statusCode == 200) {
+// 	  	var parse = JSON.parse(body);
+// 	  	if(parse.stream != null) {
+// 	  		isLive = 1;
+// 	  		if(sentFlag === 0) {
+// 	  			bot.irc.privmsg(channel.channels, "Twitch.tv" + magenta + " | " + reset + "\"" + parse.stream.channel.status + "\"" + magenta + " | " + reset  + bold + parse.stream.channel.display_name + reset + " is currently live and playing " + underline + parse.stream.channel.game + reset + " at " + parse.stream.channel.url);
+// 	  			sentFlag = 1;
+// 	  		}
+// 	  		console.log("live live live");
+// 	  	} else {
+// 	  		isLive = 0;
+// 	  		sentFlag = 0;
+// 	  		console.log("not live");
+// 	  	}
+// 	  }
+// 	});
 // }
 
-// timer();
+// setTimeout(function () {
+// 	return timer();
+// }, 10000);
+
 // setInterval(function() {
 // 	return timer();
-// }, 60000);
+// }, 10000);
