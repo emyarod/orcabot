@@ -26,6 +26,10 @@ Rename `channel.example.js` to `channel.js`, rename `opendoors.example.js` to `o
 
 Rename `lastfmdb.example.json` to `lastfmdb.json`. For information on how to store handles and user info in the .JSON, refer to the relevant section [below](https://github.com/emyarod/orcabot#adding-users-to-the-bots-database)
 
+###Twitch stream listener setup
+
+Rename `streams.example.js` to `streams.js`. Edit the file accordingly to find out when your favorite streamers on [Twitch](http://twitch.tv) go online.
+
 ###Running the bot
 ```
 $ node orcabot
