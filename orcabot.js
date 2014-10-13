@@ -52,7 +52,6 @@ var gray = "\u000314";
 var lightGray = "\u000315";
 var reset = "\u000f";
 var bold = "\u0002";
-var reset = "\u000f";
 var underline = "\u001f";
 
 var t = new twit({
@@ -539,7 +538,7 @@ function twitch (num) {
 	request("https://api.twitch.tv/kraken/streams/" + streams.csgo[num].user, function (error, response, body) {
 	  if (!error && response.statusCode == 200) {
 	  	var parse = JSON.parse(body);
-	  	if(parse.stream != null) {
+	  	if(parse.stream !== null) {
 	  		streams.csgo[num].isLive = 1;
 	  		if(streams.csgo[num].sentFlag === 0) {
 	  			bot.irc.privmsg(channel.channels[0], "Twitch.tv" + magenta + " | " + reset + "\"" + parse.stream.channel.status + "\"" + magenta + " | " + reset  + bold + parse.stream.channel.display_name + reset + " is currently live and playing " + underline + parse.stream.channel.game + reset + " at " + parse.stream.channel.url);
