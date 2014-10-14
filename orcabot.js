@@ -5,7 +5,6 @@ var keys = require("./opendoors");
 
 // get node modules
 var fs = require("fs");
-var http = require("http");
 var request = require("request");
 var cheerio = require("cheerio");
 var factory = require("irc-factory"),
@@ -500,6 +499,9 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 				}
 			});
 			break;
+		case ((message.message).search(".bobby") === 0):
+			bot.irc.privmsg(message.target, "http://aegyo.me/BOBBY");
+			break;
 		default:
 			break;
 	}
@@ -534,21 +536,21 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 
 var streams = require("./streams");
 
-function twitch (num) {
-	request("https://api.twitch.tv/kraken/streams/" + streams.csgo[num].user, function (error, response, body) {
+function twitch (game, num) {
+	request("https://api.twitch.tv/kraken/streams/" + game[num].user, function (error, response, body) {
 	  if (!error && response.statusCode === 200) {
 	  	var parse = JSON.parse(body);
 	  	if(parse.stream !== null) {
-	  		streams.csgo[num].isLive = 1;
-	  		if(streams.csgo[num].sentFlag === 0) {
+	  		game[num].isLive = 1;
+	  		if(game[num].sentFlag === 0) {
 	  			bot.irc.privmsg(channel.channels[0], "Twitch.tv" + magenta + " | " + reset + "\"" + parse.stream.channel.status + "\"" + magenta + " | " + reset  + bold + parse.stream.channel.display_name + reset + " is currently live and playing " + underline + parse.stream.channel.game + reset + " at " + parse.stream.channel.url);
-	  			streams.csgo[num].sentFlag = 1;
+	  			game[num].sentFlag = 1;
 	  		}
-	  		console.log(streams.csgo[num].user + " live live live");
+	  		console.log(game[num].user + " live live live");
 	  	} else {
-	  		streams.csgo[num].isLive = 0;
-	  		streams.csgo[num].sentFlag = 0;
-	  		console.log(streams.csgo[num].user + " not live");
+	  		game[num].isLive = 0;
+	  		game[num].sentFlag = 0;
+	  		console.log(game[num].user + " not live");
 	  	}
 	  }
 	});
@@ -556,20 +558,33 @@ function twitch (num) {
 
 var counter = 0;
 
-function timeout() {
-	if(counter < streams.csgo.length) {
+function timeout(game) {
+	if(counter < game.length) {
 		setTimeout(function () {
-	    twitch(counter);
+	    twitch(game, counter);
 	    counter++;
-	    timeout();
+	    timeout(game);
 	  }, 1000);
 	} else {
 		counter = 0;
-		timeout();
+		timeout(game);
 	}
 }
 
-timeout();
+timeout(streams.csgo);
+
+api.hookEvent("orcatail", "privmsg", function(message) {
+	var liveChans = [];
+	if((message.message).search(".live") === 0) {
+		for(var i = 0; i < streams.csgo.length; i++) {
+			if(streams.csgo[i].isLive !== 0) {
+				liveChans.push("http://twitch.tv/" + streams.csgo[i].user);
+			}
+		}
+		liveChans = liveChans.join(", ");
+		bot.irc.privmsg(channel.channels[0], "Twitch.tv" + magenta + " | " + reset + "The following channels are live: " + liveChans);
+	}
+});
 
 // working shit
 
