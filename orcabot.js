@@ -80,13 +80,16 @@ fs.readFile(lastfmdb, "utf8", function(err, data) {
 	hostNames = Object.keys(hostsAndAccounts);
 });
 
+// greeting
+api.hookEvent("orcatail", "privmsg", function(message) {
+	if(message.message.indexOf("hi") > -1) {
+		bot.irc.privmsg(message.target, "(⊙ ◡ ⊙)");
+	}
+});
+
 // modules
 api.hookEvent("orcatail", "privmsg", function(message) {
 	switch(true) {
-		// greeting
-		case ((message.message).indexOf("hi") > -1):
-			bot.irc.privmsg(message.target, "(⊙ ◡ ⊙)");
-			break;
 		// help
 		case (message.message === ".help" || (message.message).search(".help ") === 0):
 			if(message.message === ".help") {
@@ -127,7 +130,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 			}
 			break;
 		// google custom search engine (cse)
-		case ((message.message).search(".g ") === 0):
+		case ((message.message).search("\\.g ") === 0):
 			var text = (message.message).replace(".g ", "");
 			customsearch.cse.list({cx: keys.googleCX, q: text, auth: keys.googleAPIKey}, function(err, resp) {
 				if (err) {
@@ -152,7 +155,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 			});
 			break;
 		// link shortener
-		case ((message.message).search(".url ") === 0):
+		case ((message.message).search("\\.url ") === 0):
 			var text = (message.message).replace(".url ", "").replace(/[^A-Za-z 0-9 \.,\?""!@#\$%\^&\*\(\)-_=\+;:<>\/\\\|\}\{\[\]`~]*/g, "");
 			if(text.indexOf("01") === 0) {
 				text = text.replace("01", "");
@@ -167,7 +170,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 			});
 			break;
 		// twitter
-		case ((message.message).search(".tw ") === 0):
+		case ((message.message).search("\\.tw ") === 0):
 			var text = (message.message).replace(".tw ", "");
 			t.get("statuses/user_timeline", {screen_name: text, count: 1}, function (err, data, response) {
 				if(data === undefined) {
@@ -180,7 +183,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 			});
 			break;
 		// instagram
-		case ((message.message).search(".ig ") === 0):
+		case ((message.message).search("\\.ig ") === 0):
 			var text = (message.message).replace(".ig ", "");
 			ig.user_search(text, {count: 1}, function(err, users, limit) {
 				if(users.length > 0 && (users[0].username).toUpperCase() === text.toUpperCase()) {
@@ -199,7 +202,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 			});
 			break;
 		// .similar
-		case ((message.message).search(".similar ") === 0):
+		case ((message.message).search("\\.similar ") === 0):
 			var text = (message.message).replace(".similar ", "");
 			lastfm.request("artist.getSimilar", {
 				artist: text,
@@ -281,7 +284,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 			});
 			break;
 		// now playing .np <self/user/registered handle>
-		case ((message.message).search(".np") === 0):
+		case ((message.message).search("\\.np") === 0):
 			var text;
 			var hostess = JSON.stringify(hostsAndAccounts);
 			function nowplaying(handle) {
@@ -499,7 +502,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 				}
 			});
 			break;
-		case ((message.message).search(".bobby") === 0):
+		case ((message.message).search("\\.bobby") === 0):
 			bot.irc.privmsg(message.target, "http://aegyo.me/BOBBY");
 			break;
 		default:
@@ -523,7 +526,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 		for(var i = 0; i < links.length; i++) {
 			request(links[i], function(e, res, html) {
 				if(!e && res.statusCode == 200) {
-					var $ = cheerio.load(html, {lowerCaseTags: true, xmlMode: true});
+					var $ = cheerio.load(html, { lowerCaseTags: true, xmlMode: true });
 					var pageTitle = $("title").text().trim().replace(/\r|\n/g, "").replace(/\s+/g, " ");
 					bot.irc.privmsg(message.target, pageTitle);
 				}
@@ -567,7 +570,10 @@ function timeout(game) {
 	  }, 1000);
 	} else {
 		counter = 0;
-		timeout(game);
+		setTimeout(function () {
+			timeout(game);
+		}, 30000);
+		// timeout(game);
 	}
 }
 
@@ -575,7 +581,7 @@ timeout(streams.csgo);
 
 api.hookEvent("orcatail", "privmsg", function(message) {
 	var liveChans = [];
-	if((message.message).search(".live") === 0) {
+	if((message.message).search("\\.live") === 0) {
 		for(var i = 0; i < streams.csgo.length; i++) {
 			if(streams.csgo[i].isLive !== 0) {
 				liveChans.push("http://twitch.tv/" + streams.csgo[i].user);
@@ -585,36 +591,3 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 		bot.irc.privmsg(channel.channels[0], "Twitch.tv" + magenta + " | " + reset + "The following channels are live: " + liveChans);
 	}
 });
-
-// working shit
-
-// var isLive = 0;
-// var sentFlag = 0;
-
-// function timer() {
-// 	request("https://api.twitch.tv/kraken/streams/sixfeetshort", function (error, response, body) {
-// 	  if (!error && response.statusCode == 200) {
-// 	  	var parse = JSON.parse(body);
-// 	  	if(parse.stream != null) {
-// 	  		isLive = 1;
-// 	  		if(sentFlag === 0) {
-// 	  			bot.irc.privmsg(channel.channels, "Twitch.tv" + magenta + " | " + reset + "\"" + parse.stream.channel.status + "\"" + magenta + " | " + reset  + bold + parse.stream.channel.display_name + reset + " is currently live and playing " + underline + parse.stream.channel.game + reset + " at " + parse.stream.channel.url);
-// 	  			sentFlag = 1;
-// 	  		}
-// 	  		console.log("live live live");
-// 	  	} else {
-// 	  		isLive = 0;
-// 	  		sentFlag = 0;
-// 	  		console.log("not live");
-// 	  	}
-// 	  }
-// 	});
-// }
-
-// setTimeout(function () {
-// 	return timer();
-// }, 10000);
-
-// setInterval(function() {
-// 	return timer();
-// }, 10000);
