@@ -391,7 +391,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 			}
 			break;
 		// compare musical compatibility .compare <user/registered handle>
-		case ((message.message).search(".compare ") === 0):
+		case ((message.message).search("\\.compare ") === 0):
 			var name1 = message.nickname;
 			var name2 = (message.message).replace(".compare ", "");
 			var myArray = (message.message).split(" ");
