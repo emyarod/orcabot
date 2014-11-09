@@ -91,6 +91,10 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 // modules
 api.hookEvent("orcatail", "privmsg", function(message) {
 	switch(true) {
+		// join
+		case ((message.message).search("\.j") === 0 && message.hostname === "user/fiveseven-"):
+			bot.irc.join(channel.channels);
+			break;
 		// help
 		case (message.message === ".help" || (message.message).search(".help ") === 0):
 			if(message.message === ".help") {
@@ -98,40 +102,43 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 			} else if((message.message).search(".help ") === 0) {
 				var text = (message.message).replace(".help ", "");
 				switch(true) {
-				  	case (text === "g"):
-				    	bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Google search!" + bold + " Usage: " + reset + ".g <search term(s)> will return the top Google search result, as well as a shortlink to the remaining search results.");
-				    	break;
-			    	case (text === "url"):
-			    		bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Link shortener!" + bold + " Usage: " + reset + ".url <valid link> will return a shortened link.");
-			    		break;
-			    	case (text === "tw"):
-				    	bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Twitter module!" + bold + " Usage: " + reset + ".tw <username> will return the most recent tweet by <username>.");
-				    	break;
-			    	case (text === "ig"):
-				    	bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Instagram module!" + bold + " Usage: " + reset + ".ig <username> will return the most recent photo/video by <username>, along with the caption and filter used (if applicable).");
-				    	break;
-			    	case (text === "np"):
-			    		bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Last.fm module!" + bold + " Usage: " + reset + ".np (with no other parameters) returns your currently playing or most recently scrobbled track on last.fm (you must be in the bot's database for this function to work!). Entering .np <username> returns the currently playing or most recently scrobbled track for <username> on last.fm.");
-			    		break;
-		    		case (text === "charts"):
-			    		bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Last.fm module!" + bold + " Usage: " + reset + ".charts (with no other parameters) returns your top five most played artists in the last seven days on last.fm (you must be in the bot's database for this function to work!). Entering .charts <username> returns the top five most played artists in the last seven days for <username> on last.fm.");
-			    		break;
-		    		case (text === "addlastfm"):
-			    		bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Last.fm module!" + bold + " Usage: " + reset + ".addlastfm <username> stores your hostname and current IRC handle in the bot's database for usage with the .np, .charts, and .compare commands. You must be identified/authenticated on Snoonet for this feature to be of any significant usefulness.");
-			    		break;
-		    		case (text === "compare"):
-			    		bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Last.fm module!" + bold + " Usage: " + reset + ".compare <username> calculates your musical compatibility with <username> using the last.fm tasteometer. .compare <username1> <username2> calculates the musical compatibility between <username1> and <username2> using the last.fm tasteometer.");
-			    		break;
+			  	case (text === "g"):
+			    	bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Google search!" + bold + " Usage: " + reset + ".g <search term(s)> will return the top Google search result, as well as a shortlink to the remaining search results.");
+			    	break;
+		    	case (text === "url"):
+		    		bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Link shortener!" + bold + " Usage: " + reset + ".url <valid link> will return a shortened link.");
+		    		break;
+		    	case (text === "tw"):
+			    	bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Twitter module!" + bold + " Usage: " + reset + ".tw <username> will return the most recent tweet by <username>.");
+			    	break;
+		    	case (text === "ig"):
+			    	bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Instagram module!" + bold + " Usage: " + reset + ".ig <username> will return the most recent photo/video by <username>, along with the caption and filter used (if applicable).");
+			    	break;
+		    	case (text === "np"):
+		    		bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Last.fm module!" + bold + " Usage: " + reset + ".np (with no other parameters) returns your currently playing or most recently scrobbled track on last.fm (you must be in the bot's database for this function to work!). Entering .np <username> returns the currently playing or most recently scrobbled track for <username> on last.fm.");
+		    		break;
+	    		case (text === "charts"):
+		    		bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Last.fm module!" + bold + " Usage: " + reset + ".charts (with no other parameters) returns your top five most played artists in the last seven days on last.fm (you must be in the bot's database for this function to work!). Entering .charts <username> returns the top five most played artists in the last seven days for <username> on last.fm.");
+		    		break;
+	    		case (text === "addlastfm"):
+		    		bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Last.fm module!" + bold + " Usage: " + reset + ".addlastfm <username> stores your hostname and current IRC handle in the bot's database for usage with the .np, .charts, and .compare commands. You must be identified/authenticated on Snoonet for this feature to be of any significant usefulness.");
+		    		break;
+	    		case (text === "compare"):
+		    		bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Last.fm module!" + bold + " Usage: " + reset + ".compare <username> calculates your musical compatibility with <username> using the last.fm tasteometer. .compare <username1> <username2> calculates the musical compatibility between <username1> and <username2> using the last.fm tasteometer.");
+		    		break;
 					case (text === "similar"):
 			    		bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Last.fm module!" + bold + " Usage: " + reset + ".similar <artist> returns a list of similar artists and a percentage value of how closely the artists match, according to last.fm.");
-			    		break;
-				  	default:
-				    	bot.irc.privmsg(message.target, text + " is not a valid command!");
+		    		break;
+	    		case (text === "live"):
+			    		bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Twitch.tv module!" + bold + " Usage: " + reset + ".live returns a list of live streams that the channel follows. Entering .live:game returns a list of top streams for [game], sorted by viewer count.");
+		    		break;
+			  	default:
+			    	bot.irc.privmsg(message.target, text + " is not a valid command!");
 				}
 			}
 			break;
 		// google custom search engine (cse)
-		case ((message.message).search("\\.g ") === 0):
+		case ((message.message).search("\.g ") === 0):
 			var text = (message.message).replace(".g ", "");
 			customsearch.cse.list({cx: keys.googleCX, q: text, auth: keys.googleAPIKey}, function(err, resp) {
 				if (err) {
@@ -156,7 +163,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 			});
 			break;
 		// link shortener
-		case ((message.message).search("\\.url ") === 0):
+		case ((message.message).search("\.url ") === 0):
 			var text = (message.message).replace(".url ", "").replace(/[^A-Za-z 0-9 \.,\?""!@#\$%\^&\*\(\)-_=\+;:<>\/\\\|\}\{\[\]`~]*/g, "");
 			if(text.indexOf("01") === 0) {
 				text = text.replace("01", "");
@@ -171,7 +178,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 			});
 			break;
 		// twitter
-		case ((message.message).search("\\.tw ") === 0):
+		case ((message.message).search("\.tw ") === 0):
 			var text = (message.message).replace(".tw ", "");
 			t.get("statuses/user_timeline", {screen_name: text, count: 1}, function (err, data, response) {
 				if(data === undefined) {
@@ -184,7 +191,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 			});
 			break;
 		// instagram
-		case ((message.message).search("\\.ig ") === 0):
+		case ((message.message).search("\.ig ") === 0):
 			var text = (message.message).replace(".ig ", "");
 			ig.user_search(text, {count: 1}, function(err, users, limit) {
 				if(users.length > 0 && (users[0].username).toUpperCase() === text.toUpperCase()) {
@@ -203,7 +210,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 			});
 			break;
 		// .similar
-		case ((message.message).search("\\.similar ") === 0):
+		case ((message.message).search("\.similar ") === 0):
 			var text = (message.message).replace(".similar ", "");
 			lastfm.request("artist.getSimilar", {
 				artist: text,
@@ -285,7 +292,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 			});
 			break;
 		// now playing .np <self/user/registered handle>
-		case ((message.message).search("\\.np") === 0):
+		case ((message.message).search("\.np") === 0):
 			var text;
 			var hostess = JSON.stringify(hostsAndAccounts);
 			function nowplaying(handle) {
@@ -379,7 +386,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 					}
 					getCharts(text);
 					break;
-				case((message.message) === ".charts"):
+				case(message.message === ".charts"):
 					if(hostNames.indexOf(message.hostname) > -1) {
 						text = Object.getOwnPropertyDescriptor(hostsAndAccounts[message.hostname], "lfm").value;
 						getCharts(text);
@@ -392,7 +399,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 			}
 			break;
 		// compare musical compatibility .compare <user/registered handle>
-		case ((message.message).search("\\.compare ") === 0):
+		case ((message.message).search("\.compare ") === 0):
 			var name1 = message.nickname;
 			var name2 = (message.message).replace(".compare ", "");
 			var myArray = (message.message).split(" ");
@@ -503,7 +510,8 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 				}
 			});
 			break;
-		case ((message.message).search("\\.bobby") === 0):
+		// bobby
+		case ((message.message).search("\.bobby") === 0):
 			bot.irc.privmsg(message.target, "http://aegyo.me/BOBBY");
 			break;
 		default:
@@ -537,6 +545,49 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 
 // twitch.tv listener
 
+// var streams = require("./streams");
+
+// function twitch (game, num) {
+// 	request("https://api.twitch.tv/kraken/streams/" + game[num].user, function (error, response, body) {
+// 	  if (!error && response.statusCode === 200) {
+// 	  	var parse = JSON.parse(body);
+// 	  	if(parse.stream !== null) {
+// 	  		game[num].isLive = 1;
+// 	  		if(game[num].sentFlag === 0) {
+// 	  			bot.irc.privmsg(channel.channels[0], "Twitch.tv" + magenta + " | " + reset + "\"" + parse.stream.channel.status + "\"" + magenta + " | " + reset  + bold + parse.stream.channel.display_name + reset + " is currently live and playing " + underline + parse.stream.channel.game + reset + " at " + parse.stream.channel.url);
+// 	  			game[num].sentFlag = 1;
+// 	  		}
+// 	  		console.log(game[num].user + " live live live");
+// 	  	} else {
+// 	  		game[num].isLive = 0;
+// 	  		game[num].sentFlag = 0;
+// 	  		console.log(game[num].user + " not live");
+// 	  	}
+// 	  }
+// 	});
+// }
+
+// var counter = 0;
+
+// function timeout(game) {
+// 	if(counter < game.length) {
+// 		setTimeout(function () {
+// 	    twitch(game, counter);
+// 	    counter++;
+// 	    timeout(game);
+// 	  }, 1000);
+// 	} else {
+// 		counter = 0;
+// 		setTimeout(function () {
+// 			timeout(game);
+// 		}, 30000);
+// 	}
+// }
+
+// timeout(streams.csgo);
+
+// ================================================================================================
+
 var streams = require("./streams");
 
 function twitch (game, num) {
@@ -560,34 +611,67 @@ function twitch (game, num) {
 }
 
 var counter = 0;
+var arrKeys = Object.keys(streams);
+var arrCounter = 0;
 
-function timeout(game) {
-	if(counter < game.length) {
+function timeout() {
+	if(counter < streams[arrKeys[arrCounter]].length) {
 		setTimeout(function () {
-	    twitch(game, counter);
-	    counter++;
-	    timeout(game);
+			twitch(streams[arrKeys[arrCounter]], counter);
+			counter++;
+	    timeout(streams[arrKeys[arrCounter]]);
 	  }, 1000);
 	} else {
 		counter = 0;
-		setTimeout(function () {
-			timeout(game);
-		}, 30000);
-		// timeout(game);
+		arrCounter++;
+		if(arrCounter < arrKeys.length) {
+			timeout();
+		} else {
+			setTimeout(function () {
+				arrCounter = 0;
+				timeout();
+			}, 30000);
+		}
 	}
 }
 
-timeout(streams.csgo);
+timeout();
+
+// .live
+
+function listTop(game, target) {
+	var list = "https://api.twitch.tv/kraken/search/streams?q=";
+	var liveChans = [];
+	list = list.concat(game);
+	request(list, function (e, res, body) {
+		var data = JSON.parse(body);
+		for(var i = 0; i < data.streams.length; i++) {
+			liveChans.push(data.streams[i].channel.url);
+		}
+		liveChans = liveChans.join(", ");
+		bot.irc.privmsg(target, "Twitch.tv" + magenta + " | " + reset + "Live " + data.streams[0].channel.game + " streams: " + liveChans);
+	});
+}
 
 api.hookEvent("orcatail", "privmsg", function(message) {
 	var liveChans = [];
-	if((message.message).search("\\.live") === 0) {
-		for(var i = 0; i < streams.csgo.length; i++) {
-			if(streams.csgo[i].isLive !== 0) {
-				liveChans.push("http://twitch.tv/" + streams.csgo[i].user);
+	if(message.message === "\.live") {
+		for(var a = 0; a < arrKeys.length; a++) {
+			for(var i = 0; i < streams[arrKeys[a]].length; i++) {
+				if(streams[arrKeys[a]][i].isLive !== 0) {
+					liveChans.push("http://twitch.tv/" +  streams[arrKeys[a]][i].user);
+				}
 			}
 		}
 		liveChans = liveChans.join(", ");
-		bot.irc.privmsg(channel.channels[0], "Twitch.tv" + magenta + " | " + reset + "The following channels are live: " + liveChans);
+		if(liveChans.length !== 0) {
+			bot.irc.privmsg(message.target, "Twitch.tv" + magenta + " | " + reset + "The following channels are live: " + liveChans);
+		} else {
+			bot.irc.privmsg(message.target, "Twitch.tv" + magenta + " | " + reset + "None of our followed channels are currently live!");
+		}
+	} else if(message.message === "\.live:sc2") {
+		listTop("StarCraft II: Heart of the Swarm", message.target);
+	} else if(message.message === "\.live:csgo") {
+		listTop("Counter-Strike: Global Offensive", message.target);
 	}
 });
