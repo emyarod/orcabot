@@ -30,7 +30,9 @@ var bot = api.createClient("orcatail", {
 });
 
 api.hookEvent("orcatail", "registered", function(message) {
-    bot.irc.join(channel.channels);
+  for(var i = 0; i < channel.channels.length; i++) {
+  	bot.irc.join(channel.channels[i]);
+  }
 });
 
 // bot response formatting
@@ -93,7 +95,9 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 	switch(true) {
 		// join
 		case ((message.message).search("\.j") === 0 && message.hostname === "user/fiveseven-"):
-			bot.irc.join(channel.channels);
+		  for(var i = 0; i < channel.channels.length; i++) {
+		  	bot.irc.join(channel.channels[i]);
+		  }
 			break;
 		// help
 		case (message.message === ".help" || (message.message).search(".help ") === 0):
@@ -138,7 +142,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 			}
 			break;
 		// google custom search engine (cse)
-		case ((message.message).search("\.g ") === 0):
+		case ((message.message).search("\\.g ") === 0):
 			var text = (message.message).replace(".g ", "");
 			customsearch.cse.list({cx: keys.googleCX, q: text, auth: keys.googleAPIKey}, function(err, resp) {
 				if (err) {
@@ -163,7 +167,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 			});
 			break;
 		// link shortener
-		case ((message.message).search("\.url ") === 0):
+		case ((message.message).search("\\.url ") === 0):
 			var text = (message.message).replace(".url ", "").replace(/[^A-Za-z 0-9 \.,\?""!@#\$%\^&\*\(\)-_=\+;:<>\/\\\|\}\{\[\]`~]*/g, "");
 			if(text.indexOf("01") === 0) {
 				text = text.replace("01", "");
@@ -178,7 +182,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 			});
 			break;
 		// twitter
-		case ((message.message).search("\.tw ") === 0):
+		case ((message.message).search("\\.tw ") === 0):
 			var text = (message.message).replace(".tw ", "");
 			t.get("statuses/user_timeline", {screen_name: text, count: 1}, function (err, data, response) {
 				if(data === undefined) {
@@ -191,7 +195,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 			});
 			break;
 		// instagram
-		case ((message.message).search("\.ig ") === 0):
+		case ((message.message).search("\\.ig ") === 0):
 			var text = (message.message).replace(".ig ", "");
 			ig.user_search(text, {count: 1}, function(err, users, limit) {
 				if(users.length > 0 && (users[0].username).toUpperCase() === text.toUpperCase()) {
@@ -210,7 +214,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 			});
 			break;
 		// .similar
-		case ((message.message).search("\.similar ") === 0):
+		case ((message.message).search("\\.similar ") === 0):
 			var text = (message.message).replace(".similar ", "");
 			lastfm.request("artist.getSimilar", {
 				artist: text,
@@ -236,7 +240,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 			});
 			break;
 		// add to db
-		case ((message.message).search(".addlastfm ") === 0):
+		case ((message.message).search("\\.addlastfm ") === 0):
 			var text = (message.message).replace(".addlastfm ", "");
 			lastfm.request("user.getInfo", {
 				user: text,
@@ -292,7 +296,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 			});
 			break;
 		// now playing .np <self/user/registered handle>
-		case ((message.message).search("\.np") === 0):
+		case ((message.message).search("\\.np") === 0):
 			var text;
 			var hostess = JSON.stringify(hostsAndAccounts);
 			function nowplaying(handle) {
@@ -344,7 +348,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 			}
 			break;
 		// weekly charts .charts <self/user/registered handle>
-		case ((message.message).search(".charts") === 0):
+		case ((message.message).search("\\.charts") === 0):
 			var text;
 			var hostess = JSON.stringify(hostsAndAccounts);
 			function getCharts(handle) {
@@ -374,7 +378,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 				});
 			}
 			switch(true) {
-				case((message.message).search(".charts ") === 0):
+				case((message.message).search("\\.charts ") === 0):
 					text = (message.message).replace(".charts ", "");
 					if(hostess.indexOf(text) > -1) {
 						for(var i = 0; i < hostNames.length; i++) {
@@ -399,7 +403,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 			}
 			break;
 		// compare musical compatibility .compare <user/registered handle>
-		case ((message.message).search("\.compare ") === 0):
+		case ((message.message).search("\\.compare ") === 0):
 			var name1 = message.nickname;
 			var name2 = (message.message).replace(".compare ", "");
 			var myArray = (message.message).split(" ");
@@ -485,7 +489,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 			}
 			break;
 		// get artist info <is truncated at ~440 characters
-		case ((message.message).search(".getinfo ") === 0):
+		case ((message.message).search("\\.getinfo ") === 0):
 			text = (message.message).replace(".getinfo ", "");
 			lastfm.request("artist.getInfo", {
 				artist: text,
@@ -511,7 +515,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 			});
 			break;
 		// bobby
-		case ((message.message).search("\.bobby") === 0):
+		case ((message.message).search("\\.bobby") === 0):
 			bot.irc.privmsg(message.target, "http://aegyo.me/BOBBY");
 			break;
 		default:
@@ -630,7 +634,7 @@ function timeout() {
 			setTimeout(function () {
 				arrCounter = 0;
 				timeout();
-			}, 30000);
+			}, 60000);
 		}
 	}
 }
