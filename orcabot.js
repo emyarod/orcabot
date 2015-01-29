@@ -557,11 +557,12 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 
 // translate
 api.hookEvent("orcatail", "privmsg", function(message) {
-	if((message.message).search(/(\.tr )/g) === 0) {
-		var arr = (message.message).split(":");
-		var input = (arr[0].split(" "))[1];
-		var output = (arr[1].split(" "))[0];
-		var query = arr[1].slice(output.length + 1);
+	if((message.message).search(/(\.)(tr)( ).*?(:).*?( )/g) === 0) {
+		var found = (message.message).match(/(\.)(tr)( ).*?(:).*?( )/g);
+		var str = found.toString().split(":");
+		var input = (str[0].split(" "))[1];
+		var output = str[1].trim();
+		var query = (message.message).slice(found[0].length);
 		bt.translate(query, input, output, function(e, res){
 			bot.irc.privmsg(message.target, res.translated_text);
 		});
