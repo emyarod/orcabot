@@ -98,3 +98,7 @@ Will return the most recent photo/video by `<username>`, along with the caption 
 .similar <artist>
 ```
 `.similar <artist>` returns a list of similar artists and a percentage value of how closely the artists match, according to Last.fm.
+
+####Translate
+```
+`.tr <input language>:<output language> <query>` returns a translated version of <query> from <input language> to <output language>. For the full list of languages supported, see https://msdn.microsoft.com/en-us/library/hh456380.aspx
