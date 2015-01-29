@@ -72,6 +72,11 @@ var lastfm = new LastFmNode({
 	api_key: keys.lfmApiKey,
 	secret: keys.lfmSecret
 });
+var bt = require("./node_modules/bing-translate/lib/bing-translate.js").init({
+	client_id: keys.clientID,
+	client_secret: keys.msTranslatorKey
+});
+
 var lastfmdb = "./lastfmdb.json";
 var hostsAndAccounts = {};
 var hostNames = {};
@@ -87,6 +92,9 @@ fs.readFile(lastfmdb, "utf8", function(err, data) {
 api.hookEvent("orcatail", "privmsg", function(message) {
 	if(message.message.indexOf("hi") > -1) {
 		bot.irc.privmsg(message.target, "(⊙ ◡ ⊙)");
+	}
+	if(message.message.indexOf("flex") > -1) {
+		bot.irc.privmsg(message.target, "ＮＯ  ＦＬＥＸ  ＺＯＮＥ  ༼ᕗຈ ل͜ຈ༽ᕗ ᕙ( ͡° ͜ʖ ͡°)ᕗ༼ᕗຈ ل͜ຈ༽ᕗ  ＮＯ  ＦＬＥＸ  ＺＯＮＥ");
 	}
 });
 
@@ -544,6 +552,19 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 				}
 			});
 		}
+	}
+});
+
+// translate
+api.hookEvent("orcatail", "privmsg", function(message) {
+	if((message.message).search(/(\.tr )/g) === 0) {
+		var arr = (message.message).split(":");
+		var input = (arr[0].split(" "))[1];
+		var output = (arr[1].split(" "))[0];
+		var query = arr[1].slice(output.length + 1);
+		bt.translate(query, input, output, function(e, res){
+			bot.irc.privmsg(message.target, res.translated_text);
+		});
 	}
 });
 
