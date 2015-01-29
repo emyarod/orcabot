@@ -570,7 +570,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 			if(!e) {
 				bot.irc.privmsg(message.target, res.translated_text);
 			} else {
-				console.log(e);
+				bot.irc.privmsg(message.target, "There was an error with your translation.");
 			}
 		});
 	}
