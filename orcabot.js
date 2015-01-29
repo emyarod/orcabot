@@ -145,7 +145,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 			    		bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Twitch.tv module!" + bold + " Usage: " + reset + ".live returns a list of live streams that the channel follows. Entering .live:game returns a list of top streams for [game], sorted by viewer count.");
 		    		break;
 	    		case (text === "tr"):
-	    				bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Translation module!" + bold " Usage: " + reset + ".tr <input language>:<output language> <query> returns a translated version of <query> from <input language> to <output language>. For the full list of languages supported, see http://aegyo.me/xmS");
+	    				bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Translation module!" + bold + " Usage: " + reset + ".tr <input language>:<output language> <query> returns a translated version of <query> from <input language> to <output language>. For the full list of languages supported, see http://aegyo.me/xmS");
 	    			break;
 			  	default:
 			    	bot.irc.privmsg(message.target, text + " is not a valid command!");
