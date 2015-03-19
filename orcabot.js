@@ -535,13 +535,12 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 });
 
 // url parser
-
 api.hookEvent("orcatail", "privmsg", function(message) {
 	var arr = (message.message).split(" ");
 	var links = [];
 	for(var i = 0; i < arr.length; i++) {
-		if(url.parse(arr[i]).protocol !== null) {
-			links.push(arr[i]);
+		if(url.parse(arr[i]).protocol !== null && (url.parse(arr[i]).path).indexOf(".gif") === -1) {
+			links.push(arr[i]);	
 		}
 	}
 	if(links.length > 0) {
@@ -577,50 +576,6 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 });
 
 // twitch.tv listener
-
-// var streams = require("./streams");
-
-// function twitch (game, num) {
-// 	request("https://api.twitch.tv/kraken/streams/" + game[num].user, function (error, response, body) {
-// 	  if (!error && response.statusCode === 200) {
-// 	  	var parse = JSON.parse(body);
-// 	  	if(parse.stream !== null) {
-// 	  		game[num].isLive = 1;
-// 	  		if(game[num].sentFlag === 0) {
-// 	  			bot.irc.privmsg(channel.channels[0], "Twitch.tv" + magenta + " | " + reset + "\"" + parse.stream.channel.status + "\"" + magenta + " | " + reset  + bold + parse.stream.channel.display_name + reset + " is currently live and playing " + underline + parse.stream.channel.game + reset + " at " + parse.stream.channel.url);
-// 	  			game[num].sentFlag = 1;
-// 	  		}
-// 	  		console.log(game[num].user + " live live live");
-// 	  	} else {
-// 	  		game[num].isLive = 0;
-// 	  		game[num].sentFlag = 0;
-// 	  		console.log(game[num].user + " not live");
-// 	  	}
-// 	  }
-// 	});
-// }
-
-// var counter = 0;
-
-// function timeout(game) {
-// 	if(counter < game.length) {
-// 		setTimeout(function () {
-// 	    twitch(game, counter);
-// 	    counter++;
-// 	    timeout(game);
-// 	  }, 1000);
-// 	} else {
-// 		counter = 0;
-// 		setTimeout(function () {
-// 			timeout(game);
-// 		}, 30000);
-// 	}
-// }
-
-// timeout(streams.csgo);
-
-// ================================================================================================
-
 var streams = require("./streams");
 
 function twitch (game, num) {
