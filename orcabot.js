@@ -539,7 +539,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 	var arr = (message.message).split(" ");
 	var links = [];
 	for(var i = 0; i < arr.length; i++) {
-		if(url.parse(arr[i]).protocol !== null && (url.parse(arr[i]).path).indexOf(".gif") === -1) {
+		if(url.parse(arr[i]).protocol !== null) {
 			links.push(arr[i]);	
 		}
 	}
