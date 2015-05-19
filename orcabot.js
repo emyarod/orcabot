@@ -176,7 +176,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 					});
 				}
 			});
-			break;
+			// break;
 		// link shortener
 		case ((message.message).search("\\.url ") === 0):
 			var text = (message.message).replace(".url ", "").replace(/[^A-Za-z 0-9 \.,\?""!@#\$%\^&\*\(\)-_=\+;:<>\/\\\|\}\{\[\]`~]*/g, "");
