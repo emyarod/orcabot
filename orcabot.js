@@ -72,6 +72,7 @@ var lastfm = new LastFmNode({
 	api_key: keys.lfmApiKey,
 	secret: keys.lfmSecret
 });
+
 var bt = require("./node_modules/bing-translate/lib/bing-translate.js").init({
 	client_id: keys.clientID,
 	client_secret: keys.msTranslatorKey
