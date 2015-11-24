@@ -1,18 +1,19 @@
 {
   "name": "orcabot",
   "version": "1.0.1",
-  "description": "Node.JS IRC bot",
+  "description": "this is a simple node.js IRC bot :whale: :whale2:",
   "main": "orcabot.js",
   "dependencies": {
+    "bing-translate": "^0.0.2",
     "cheerio": "^0.17.0",
-    "googleapis": "^1.0.14",
-    "html-entities": "^1.0.10",
+    "googleapis": "^1.1.5",
+    "html-entities": "^1.1.2",
     "instagram-node": "^0.4.3",
+    "irc-factory": "^1.10.1",
     "lastfm": "^0.9.2",
-    "irc-factory": "^1.8.8",
-    "twit": "^1.1.18",
-    "request": "^2.44.0",
-    "node-twitchtv": "^0.0.4"
+    "node-twitchtv": "^0.0.4",
+    "request": "^2.55.0",
+    "twit": "^1.1.20"
   },
   "devDependencies": {},
   "scripts": {
@@ -22,14 +23,7 @@
     "type": "git",
     "url": "https://github.com/emyarod/orcabot.git"
   },
-  "keywords": [
-    "node",
-    "node.js",
-    "irc",
-    "emyarod",
-    "orcabot",
-    "sckw"
-  ],
+  "keywords": [],
   "author": "emyarod",
   "license": "ISC",
   "bugs": {
