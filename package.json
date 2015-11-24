@@ -1,6 +1,6 @@
 {
   "name": "orcabot",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Node.JS IRC bot",
   "main": "orcabot.js",
   "dependencies": {
