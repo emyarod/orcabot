@@ -5,17 +5,10 @@ this is a simple node.js IRC bot :whale: :whale2:
 
 ###Install [node.js](http://nodejs.org/) and [npm](https://npmjs.org/)
 
-```
-git clone https://github.com/joyent/node
-cd node
-./configure
-make
-make install
-```
-
 ###Install dependencies
 ```
-npm install orcabot
+cd orcabot
+npm install
 ```
 
 ###Bot configuration
