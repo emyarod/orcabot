@@ -63,7 +63,7 @@ Will return the most recent photo/video by `<username>`, along with the caption 
 ```
 .addlastfm <last.fm username>
 ```
-`.addlastfm <username>` stores the message sender's hostname and current IRC handle in the bot's database for usage with the `.np`, `.charts`, and `.compare` commands. User must be identified/authenticated on the server for this feature to be of any significant usefulness.
+`.addlastfm <username>` stores the message sender's hostname and current IRC handle in the bot's database for usage with the `.np` and `.charts` commands. User must be identified/authenticated on the server for this feature to be of any significant usefulness.
 
 ####Now playing
 ```
@@ -78,13 +78,6 @@ Will return the most recent photo/video by `<username>`, along with the caption 
 ```
 `.charts` (with no other parameters) returns the message sender's top five most played artists in the last seven days on Last.fm (user must be in the bot's database for this function to work!).
 `.charts <username>` returns the top five most played artists in the last seven days for `<username>` on Last.fm.
-
-####Compare users using Last.fm "Taste-o-Meter"
-```
-.compare <IRC handle/last.fm username>
-```
-`.compare <username>` calculates your musical compatibility with `<username>` using the Last.fm Taste-o-Meter.
-`.compare <username1> <username2>` calculates the musical compatibility between `<username1>` and `<username2>` using the Last.fm Taste-o-Meter.
 
 ####Fetch similar artists
 ```
