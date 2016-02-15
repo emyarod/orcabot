@@ -134,10 +134,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 		    		bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Last.fm module!" + bold + " Usage: " + reset + ".charts (with no other parameters) returns your top five most played artists in the last seven days on last.fm (you must be in the bot's database for this function to work!). Entering .charts <username> returns the top five most played artists in the last seven days for <username> on last.fm.");
 		    		break;
 	    		case (text === "addlastfm"):
-		    		bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Last.fm module!" + bold + " Usage: " + reset + ".addlastfm <username> stores your hostname and current IRC handle in the bot's database for usage with the .np, .charts, and .compare commands. You must be identified/authenticated on Snoonet for this feature to be of any significant usefulness.");
-		    		break;
-	    		case (text === "compare"):
-		    		bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Last.fm module!" + bold + " Usage: " + reset + ".compare <username> calculates your musical compatibility with <username> using the last.fm tasteometer. .compare <username1> <username2> calculates the musical compatibility between <username1> and <username2> using the last.fm tasteometer.");
+		    		bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Last.fm module!" + bold + " Usage: " + reset + ".addlastfm <username> stores your hostname and current IRC handle in the bot's database for usage with the .np and .charts commands. You must be identified/authenticated on Snoonet for this feature to be of any significant usefulness.");
 		    		break;
 					case (text === "similar"):
 			    		bot.irc.privmsg(message.target, bold + "Help for " + text + ": " + reset + "Last.fm module!" + bold + " Usage: " + reset + ".similar <artist> returns a list of similar artists and a percentage value of how closely the artists match, according to last.fm.");
@@ -414,92 +411,6 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 					break;
 			}
 			break;
-		// compare musical compatibility .compare <user/registered handle>
-		case ((message.message).search("\\.compare ") === 0):
-			var name1 = message.nickname;
-			var name2 = (message.message).replace(".compare ", "");
-			var myArray = (message.message).split(" ");
-			myArray.splice(0, 1);
-			var hostess = JSON.stringify(hostsAndAccounts);
-			function compare(handle1, handle2) {
-				lastfm.request("tasteometer.compare", {
-					type1: "user",
-					value1: handle1,
-					type2: "user",
-					value2: handle2,
-					handlers: {
-						success: function(data) {
-							var score = (data.comparison.result.score * 100).toFixed(2);
-							var adjective = "";
-							switch(true) {
-							  	case (score >= 90):
-							    	adjective = lightRed + "SUPER" + reset;
-							    	break;
-						    	case (90 > score && score >= 70):
-							    	adjective = orange + "VERY HIGH" + reset;
-							    	break;
-						    	case (70 > score && score >= 50):
-							    	adjective = darkGreen + "HIGH" + reset;
-							    	break;
-						    	case (50 > score && score >= 30):
-						    		adjective = magenta + "MEDIUM" + reset;
-						    		break;
-					    		case (30 > score && score >= 10):
-						    		adjective = gray + "LOW" + reset;
-						    		break;
-							  	default:
-							    	adjective = lightGray + "VERY LOW" + reset;
-							}
-							if((data.comparison.result.artists.artist).length < 5) {
-									var x = (data.comparison.result.artists.artist).length;
-								} else {
-									x = 5;
-								}
-							var similarArtists = [];
-							for(i = 0; i < x; i++) {
-								similarArtists.push(data.comparison.result.artists.artist[i].name);
-							}
-							bot.irc.privmsg(message.target, "Last.fm" + bold + lightRed + " | " + bold + reset + "Users " + bold + name1 + reset + " and " + bold + name2 + reset + " have " + bold + adjective + reset + " compatibility (similarity " + score + "%)" + darkRed + bold + " | " + reset + "Similar artists include: " + similarArtists.join(", "));
-						},
-						error: function(error) {
-							bot.irc.privmsg(message.target, "Last.fm " + lightRed + bold + "| " + bold + reset + "Either " + bold + name1 + reset + " or " + bold + name2 + bold + " is not a registered username on Last.fm!");
-						}
-					}
-				});
-			}
-			switch(true) {
-				case (myArray.length != 2):
-					if((hostess.toUpperCase()).search(name1.toUpperCase()) > -1 || (hostess.toUpperCase()).search(name2.toUpperCase()) > -1) {
-						for(var i = 0; i < hostNames.length; i++) {
-							if(((JSON.stringify(hostsAndAccounts[hostNames[i]].nicks)).toUpperCase()).search(name1.toUpperCase()) > -1) {
-								name1 = hostsAndAccounts[hostNames[i]].lfm;
-							}
-							if(((JSON.stringify(hostsAndAccounts[hostNames[i]].nicks)).toUpperCase()).search(name2.toUpperCase()) > -1) {
-								name2 = hostsAndAccounts[hostNames[i]].lfm;
-							}
-						}
-					}
-					compare(name1, name2);
-					break;
-				case (myArray.length === 2):
-					name1 = myArray[0];
-					name2 = myArray[1];
-					if((hostess.toUpperCase()).search(name1.toUpperCase()) > -1 || (hostess.toUpperCase).search(name2.toUpperCase()) > -1) {
-						for(var i = 0; i < hostNames.length; i++) {
-							if((JSON.stringify(hostsAndAccounts[hostNames[i]].nicks)).toUpperCase().search(name1.toUpperCase()) > -1) {
-								name1 = hostsAndAccounts[hostNames[i]].lfm;
-							}
-							if((JSON.stringify(hostsAndAccounts[hostNames[i]].nicks)).toUpperCase().search(name2.toUpperCase()) > -1) {
-								name2 = hostsAndAccounts[hostNames[i]].lfm;
-							}
-						}
-					}
-					compare(name1, name2);
-					break;
-				default:
-					break;
-			}
-			break;
 		// get artist info <is truncated at ~440 characters
 		case ((message.message).search("\\.getinfo ") === 0):
 			text = (message.message).replace(".getinfo ", "");
@@ -541,7 +452,7 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 	var links = [];
 	for(var i = 0; i < arr.length; i++) {
 		if(url.parse(arr[i]).protocol !== null) {
-			links.push(arr[i]);	
+			links.push(arr[i]);
 		}
 	}
 	if(links.length > 0) {
