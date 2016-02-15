@@ -216,9 +216,9 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 						if(medias === undefined) {
 							bot.irc.privmsg(message.target, "Instagram " + lightBlue + bold + "| " + reset + "User " + bold + users[0].username + reset + " has no photos to show or has a private account!");
 						} else if(medias[0].caption !== null) {
-							bot.irc.privmsg(message.target, "Instagram " + lightBlue + bold + "| " + reset + "Most recent post by " + bold + text + " (" + medias[0].user.full_name + ")" + lightBlue + " | " + reset + medias[0].caption.text + " " + (medias[0].link).replace("instagram.com", "instagr.am") + lightBlue + bold + " | " + reset + "Filter: " + medias[0].filter);
+							bot.irc.privmsg(message.target, "Instagram " + lightBlue + bold + "| " + reset + "Most recent post by " + bold + text + " (" + medias[0].user.full_name + ")" + lightBlue + " | " + reset + medias[0].caption.text + " " + medias[0].link + lightBlue + bold + " | " + reset + "Filter: " + medias[0].filter);
 						} else {
-							bot.irc.privmsg(message.target, "Instagram " + lightBlue + bold + "| " + reset + "Most recent post by " + bold + text + " (" + medias[0].user.full_name + ")" + lightBlue + " | " + reset + "No caption " + (medias[0].link).replace("instagram.com", "instagr.am") + lightBlue + bold + " | " + reset + "Filter: " + medias[0].filter);
+							bot.irc.privmsg(message.target, "Instagram " + lightBlue + bold + "| " + reset + "Most recent post by " + bold + text + " (" + medias[0].user.full_name + ")" + lightBlue + " | " + reset + "No caption " + medias[0].link + lightBlue + bold + " | " + reset + "Filter: " + medias[0].filter);
 						}
 					});
 				} else {
