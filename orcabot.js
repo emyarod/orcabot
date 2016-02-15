@@ -14,9 +14,12 @@ var Entities = require("html-entities").AllHtmlEntities;
 var twit = require("twit");
 var LastFmNode = require("lastfm").LastFmNode;
 var ig = require("instagram-node").instagram();
-var google = require("googleapis");
+var google = require('googleapis');
+// var OAuth2 = google.auth.Oauth2;
+// var oauth2Client = new OAuth2(keys.googleClientID, keys.googleClientSecret, keys.googleRedirectURL);
 var customsearch = google.customsearch("v1");
-var urlshortener = google.urlshortener("v1");
+var urlshortener = google.urlshortener('v1');
+// var urlshortener = google.urlshortener({ version: 'v1', auth: oauth2Client });
 
 var entities = new Entities();
 
@@ -174,16 +177,17 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 					});
 				}
 			});
-			// break;
+			break;
 		// link shortener
 		case ((message.message).search("\\.url ") === 0):
 			var text = (message.message).replace(".url ", "").replace(/[^A-Za-z 0-9 \.,\?""!@#\$%\^&\*\(\)-_=\+;:<>\/\\\|\}\{\[\]`~]*/g, "");
+			console.log(text);
 			if(text.indexOf("01") === 0) {
 				text = text.replace("01", "");
 			}
 			urlshortener.url.insert({ resource: { longUrl: text } }, function(err, result) {
 				if(err) {
-					bot.irc.privmsg(message.target, "There was an error in creating your shortlink!");
+					bot.irc.privmsg(message.target, "There was an error in creating your shortlink! " + err);
 					console.log(err);
 				} else {
 					bot.irc.privmsg(message.target, "shortlink: " + result.id);
@@ -535,7 +539,7 @@ function timeout() {
 	}
 }
 
-timeout();
+// timeout();
 
 // .live
 
