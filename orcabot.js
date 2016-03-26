@@ -225,8 +225,9 @@ api.hookEvent("orcatail", "privmsg", function(message) {
 					});
 				} else {
 					bot.irc.privmsg(message.target, "Instagram " + lightBlue + bold + "| " + bold + reset + bold + text + bold + " is not a registered user on Instagram!");
-				} else if(err) {
-					console.log(err);
+					if(err) {
+						console.log(err);
+					}
 				}
 			});
 			break;
