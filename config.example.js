@@ -1,9 +1,10 @@
 var config = {
-  nick: "nick",
-  user: "user",
-  realname: "https://github.com/emyarod/orcabot",
-  server: "server",
-  password: "password",
+  server: 'example.server.here',
+  nick: 'bot-nickname',
+  user: 'bot-username',
+  realname: 'https://github.com/emyarod/orcabot',
+  password: 'bot-password',
+  handlerHostname: 'your-hostname-here'
 };
 
 module.exports = config;
