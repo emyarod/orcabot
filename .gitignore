@@ -29,5 +29,5 @@ node_modules
 config.js
 lastfmdb.json
 opendoors.js
-channel.js
+channels.js
 streams.js
