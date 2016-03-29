@@ -15,11 +15,13 @@ var LastFmNode = require('lastfm').LastFmNode;
 var ig = require('instagram-node').instagram();
 
 var google = require('googleapis');
-// var API_KEY = keys.googleAPIKey;
+var googleAPIKey = keys.googleAPIKey;
 // var OAuth2 = google.auth.OAuth2;
 // var oauth2Client = new OAuth2(keys.googleClientID, keys.googleClientSecret, keys.googleRedirectURL);
+// google.options({ auth: oauth2Client });
 
 var customsearch = google.customsearch('v1');
+var urlshortener = google.urlshortener('v1');
 
 var entities = new Entities();
 
@@ -319,9 +321,9 @@ function help(from, to, text, message) {
 	  	case (text === 'g'):
 	    	bot.say(to, bold + 'Help for ' + text + ': ' + reset + 'Google search!' + bold + ' Usage: ' + reset + '.g <search term(s)> will return the top Google search result, as well as a shortlink to the remaining search results.');
 	    	break;
-    	// case (text === 'url'):
-    	// 	bot.say(to, bold + 'Help for ' + text + ': ' + reset + 'Link shortener!' + bold + ' Usage: ' + reset + '.url <valid link> will return a shortened link.');
-    	// 	break;
+    	case (text === 'url'):
+    		bot.say(to, bold + 'Help for ' + text + ': ' + reset + 'Link shortener!' + bold + ' Usage: ' + reset + '.url <valid link> will return a shortened link.');
+    		break;
     	case (text === 'tw'):
 	    	bot.say(to, bold + 'Help for ' + text + ': ' + reset + 'Twitter module!' + bold + ' Usage: ' + reset + '.tw <username> will return the most recent tweet by <username>.');
 	    	break;
@@ -354,18 +356,39 @@ function help(from, to, text, message) {
 
 // google custom search engine (cse)
 function googlesearch(from, to, text, message) {
-	var text = text.replace(".g ", "");
+	var text = text.replace('.g ', '');
 	customsearch.cse.list({cx: keys.googleCX, q: text, auth: keys.googleAPIKey}, function(err, resp) {
 		if (err) {
 			console.log(err);
 			return;
 		}
 		if (resp.searchInformation.formattedTotalResults == 0) {
-			bot.say(to, "No results found!");
+			bot.say(to, 'No results found!');
 		} else if (resp.items && resp.items.length > 0) {
-			var searchResults = "https://www.google.com/?gws_rd=ssl#q=" + text.replace(/ /g, "+");
+			var searchResults = 'https://www.google.com/?gws_rd=ssl#q=' + text.replace(/ /g, '+');
 			var shortlink;
-			bot.say(to, entities.decode(resp.items[0].title).replace(/<(?:.|\n)*?>/gm, "").replace(/\s+/g, " ").trim() + darkBlue + bold + " | " + reset + entities.decode(resp.items[0].snippet).replace(/<(?:.|\n)*?>/gm, "").replace(/\s+/g, " ").trim() + darkBlue + bold + " | " + reset + resp.items[0].link + darkBlue + bold + " | " + reset + "more results: " + searchResults);
+			// shorten search results url
+			urlshortener.url.insert({ resource: { longUrl: searchResults }, auth: googleAPIKey }, function(err, result) {
+				if (err) {
+					console.log(err);
+					bot.say(to, entities.decode(resp.items[0].title).replace(/<(?:.|\n)*?>/gm, '').replace(/\s+/g, ' ').trim() + darkBlue + bold + ' | ' + reset + entities.decode(resp.items[0].snippet).replace(/<(?:.|\n)*?>/gm, '').replace(/\s+/g, ' ').trim() + darkBlue + bold + ' | ' + reset + resp.items[0].link + darkBlue + bold + ' | ' + reset + 'more results: ' + searchResults);
+				} else {
+					bot.say(to, entities.decode(resp.items[0].title).replace(/<(?:.|\n)*?>/gm, '').replace(/\s+/g, ' ').trim() + darkBlue + bold + ' | ' + reset + entities.decode(resp.items[0].snippet).replace(/<(?:.|\n)*?>/gm, '').replace(/\s+/g, ' ').trim() + darkBlue + bold + ' | ' + reset + resp.items[0].link + darkBlue + bold + ' | ' + reset + 'more results: ' + result.id);
+				}
+			});
+		}
+	});
+}
+
+// link shortener
+function shortenurl(from, to, text, message) {
+	var text = text.replace('.url ', '');
+	urlshortener.url.insert({ resource: { longUrl: text }, auth: googleAPIKey }, function(err, result) {
+		if (err) {
+			bot.say(to, 'There was an error in creating your shortlink! ' + err);
+			console.log(err);
+		} else {
+			bot.say(to, 'shortlink: ' + result.id);
 		}
 	});
 }
@@ -649,6 +672,11 @@ bot.addListener('message', function(from, to, text, message) {
 		// google custom search engine (cse)
 		case (text.search(/^(\.g )/g) === 0):
 			googlesearch(from, to, text, message);
+			break;
+
+		// url shortener
+		case (text.search(/^(\.url )/g) === 0):
+			shortenurl(from, to, text, message);
 			break;
 
 		// translator
