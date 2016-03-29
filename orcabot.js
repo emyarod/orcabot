@@ -13,12 +13,13 @@ var Entities = require('html-entities').AllHtmlEntities;
 var twit = require('twit');
 var LastFmNode = require('lastfm').LastFmNode;
 var ig = require('instagram-node').instagram();
+
 var google = require('googleapis');
-// var OAuth2 = google.auth.Oauth2;
+// var API_KEY = keys.googleAPIKey;
+// var OAuth2 = google.auth.OAuth2;
 // var oauth2Client = new OAuth2(keys.googleClientID, keys.googleClientSecret, keys.googleRedirectURL);
+
 var customsearch = google.customsearch('v1');
-var urlshortener = google.urlshortener('v1');
-// var urlshortener = google.urlshortener({ version: 'v1', auth: oauth2Client });
 
 var entities = new Entities();
 
@@ -318,9 +319,9 @@ function help(from, to, text, message) {
 	  	case (text === 'g'):
 	    	bot.say(to, bold + 'Help for ' + text + ': ' + reset + 'Google search!' + bold + ' Usage: ' + reset + '.g <search term(s)> will return the top Google search result, as well as a shortlink to the remaining search results.');
 	    	break;
-    	case (text === 'url'):
-    		bot.say(to, bold + 'Help for ' + text + ': ' + reset + 'Link shortener!' + bold + ' Usage: ' + reset + '.url <valid link> will return a shortened link.');
-    		break;
+    	// case (text === 'url'):
+    	// 	bot.say(to, bold + 'Help for ' + text + ': ' + reset + 'Link shortener!' + bold + ' Usage: ' + reset + '.url <valid link> will return a shortened link.');
+    	// 	break;
     	case (text === 'tw'):
 	    	bot.say(to, bold + 'Help for ' + text + ': ' + reset + 'Twitter module!' + bold + ' Usage: ' + reset + '.tw <username> will return the most recent tweet by <username>.');
 	    	break;
@@ -364,32 +365,7 @@ function googlesearch(from, to, text, message) {
 		} else if (resp.items && resp.items.length > 0) {
 			var searchResults = "https://www.google.com/?gws_rd=ssl#q=" + text.replace(/ /g, "+");
 			var shortlink;
-			// shorten search results url
-			urlshortener.url.insert({ resource: { longUrl: searchResults } }, function(err, result) {
-				if (err) {
-					console.log(err);
-					bot.say(to, entities.decode(resp.items[0].title).replace(/<(?:.|\n)*?>/gm, "").replace(/\s+/g, " ").trim() + darkBlue + bold + " | " + reset + entities.decode(resp.items[0].snippet).replace(/<(?:.|\n)*?>/gm, "").replace(/\s+/g, " ").trim() + darkBlue + bold + " | " + reset + resp.items[0].link + darkBlue + bold + " | " + reset + "more results: " + searchResults);
-				} else {
-					bot.say(to, entities.decode(resp.items[0].title).replace(/<(?:.|\n)*?>/gm, "").replace(/\s+/g, " ").trim() + darkBlue + bold + " | " + reset + entities.decode(resp.items[0].snippet).replace(/<(?:.|\n)*?>/gm, "").replace(/\s+/g, " ").trim() + darkBlue + bold + " | " + reset + resp.items[0].link + darkBlue + bold + " | " + reset + "more results: " + result.id);
-				}
-			});
-		}
-	});
-}
-
-// link shortener
-function shortenurl(from, to, text, message) {
-	var text = text.replace('.url ', '').replace(/[^A-Za-z 0-9 \.,\?""!@#\$%\^&\*\(\)-_=\+;:<>\/\\\|\}\{\[\]`~]*/g, "");
-	console.log(text);
-	if (text.indexOf('01') === 0) {
-		text = text.replace('01', '');
-	}
-	urlshortener.url.insert({ resource: { longUrl: text } }, function(err, result) {
-		if (err) {
-			bot.say(to, 'There was an error in creating your shortlink! ' + err);
-			console.log(err);
-		} else {
-			bot.say(to, 'shortlink: ' + result.id);
+			bot.say(to, entities.decode(resp.items[0].title).replace(/<(?:.|\n)*?>/gm, "").replace(/\s+/g, " ").trim() + darkBlue + bold + " | " + reset + entities.decode(resp.items[0].snippet).replace(/<(?:.|\n)*?>/gm, "").replace(/\s+/g, " ").trim() + darkBlue + bold + " | " + reset + resp.items[0].link + darkBlue + bold + " | " + reset + "more results: " + searchResults);
 		}
 	});
 }
@@ -673,11 +649,6 @@ bot.addListener('message', function(from, to, text, message) {
 		// google custom search engine (cse)
 		case (text.search(/^(\.g )/g) === 0):
 			googlesearch(from, to, text, message);
-			break;
-
-		// url shortener
-		case (text.search(/^(\.url )/g) === 0):
-			shortenurl(from, to, text, message);
 			break;
 
 		// translator
