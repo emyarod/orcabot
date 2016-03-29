@@ -9,6 +9,7 @@ var url = require('url');
 var irc = require('irc');
 var request = require('request');
 var cheerio = require('cheerio');
+var moment = require('moment');
 var Entities = require('html-entities').AllHtmlEntities;
 var twit = require('twit');
 var LastFmNode = require('lastfm').LastFmNode;
@@ -22,6 +23,7 @@ var googleAPIKey = keys.googleAPIKey;
 
 var customsearch = google.customsearch('v1');
 var urlshortener = google.urlshortener('v1');
+var youtube = google.youtube('v3');
 
 var entities = new Entities();
 
@@ -314,7 +316,7 @@ function join(from, to, text, message) {
 // help
 function help(from, to, text, message) {
 	if (text === '\.help') {
-		bot.say(to, 'Available commands: g, url, tw, ig, np, charts, addlastfm, compare, similar. Type \'.help <command>\' for more information about a command!');
+		bot.say(to, 'Available commands: g, url, tw, ig, yt, np, charts, addlastfm, compare, similar. Type \'.help <command>\' for more information about a command!');
 	} else if (text.search('\.help ') === 0) {
 		var text = text.replace('.help ', '');
 		switch(true) {
@@ -329,6 +331,9 @@ function help(from, to, text, message) {
 	    	break;
     	case (text === 'ig'):
 	    	bot.say(to, bold + 'Help for ' + text + ': ' + reset + 'Instagram module!' + bold + ' Usage: ' + reset + '.ig <username> will return the most recent photo/video by <username>, along with the caption and filter used (if applicable).');
+	    	break;
+    	case (text === 'yt'):
+	    	bot.say(to, bold + 'Help for ' + text + ': ' + reset + 'YouTube module!' + bold + ' Usage: ' + reset + '.yt <query> will return the top search result for <query>, along with relevant video information and a link to more search results.');
 	    	break;
     	case (text === 'np'):
     		bot.say(to, bold + 'Help for ' + text + ': ' + reset + 'Last.fm module!' + bold + ' Usage: ' + reset + '.np (with no other parameters) returns your currently playing or most recently scrobbled track on last.fm (you must be in the bot\'s database for this function to work!). Entering .np <username> returns the currently playing or most recently scrobbled track for <username> on last.fm.');
@@ -429,6 +434,98 @@ function instagramquery(from, to, text, message) {
 			});
 		} else {
 			bot.say(to, 'Instagram ' + lightBlue + bold + '| ' + bold + reset + bold + text + bold + ' is not a registered user on Instagram!');
+		}
+	});
+}
+
+
+// youtube
+function searchYouTube(from, to, text, message) {
+	var ytSearch = text.replace('.yt ', '');
+	var searchResults;
+
+	urlshortener.url.insert({ resource: { longUrl: 'https://www.youtube.com/results?search_query=' + ytSearch }, auth: googleAPIKey }, function(err, result) {
+		if (err) {
+			console.log(err);
+		} else {
+			searchResults = reset + bold + 'More results: ' + reset + result.id;
+		}
+	});
+
+	youtube.search.list({
+		auth: googleAPIKey,
+		part: 'snippet',
+		q: ytSearch
+	}, function(err, data) {
+		if (!err) {
+			switch(true) {
+				// no results from query
+				case(data.pageInfo.totalResults === 0):
+					bot.say(to, 'No results found!');
+				break;
+				default:
+					// console.log(data);
+					// top search result = data.items[0]
+					var videoID = data.items[0].id.videoId;
+					var videoTitle = bold + data.items[0].snippet.title;
+					var channelName = darkRed + bold + data.items[0].snippet.channelTitle;
+
+					youtube.videos.list({
+						auth: googleAPIKey,
+						part: 'snippet, contentDetails, status, statistics',
+						id: videoID
+					}, function(err, data) {
+						if (!err) {
+							// top search result = data.items[0]
+							var viewCount = bold + data.items[0].statistics.viewCount.replace(/\B(?=(\d{3})+(?!\d))/g, ",") + reset + ' views'; // add commas to mark every third digit
+
+							var duration = moment.duration(data.items[0].contentDetails.duration, moment.ISO_8601).asSeconds();
+							var contentRating = '';
+							// conversion because moment.js does not support conversion from duration to h:m:s format
+							function getHours(timeInSeconds) {
+								return Math.floor(timeInSeconds / 3600);
+							}
+
+							function getMinutes(timeInSeconds) {
+								return Math.floor(timeInSeconds / 60);
+							}
+
+							// convert video duration from ISO-8601
+							var hours = getHours(duration);
+							if (hours >= 1) { // at least 1:00:00
+								duration = duration - (hours * 3600);
+								var minutes = getMinutes(duration);
+								if (minutes >= 1) { // at least 1:01:00
+									seconds = duration - (minutes * 60);
+									duration = hours + 'h ' + minutes + 'm ' + seconds + 's';
+								} else { // between 1:00:00 and 1:01:00
+									duration = hours + 'h ' + duration + 's';
+								}
+							} else {
+								var minutes = getMinutes(duration);
+								if (minutes >= 1) { // between 1:00 and 1:00:00
+									seconds = duration - (minutes * 60);
+									duration = minutes + 'm ' + seconds + 's';
+								} else { // below 1:00
+									duration = duration + 's';
+								}
+							}
+
+							// find if video is age restricted
+							if (data.items[0].contentDetails.contentRating !== undefined) {
+								contentRating = bold + darkRed + '**NSFW** | ' + reset;
+							}
+
+							bot.say(to, contentRating + videoTitle + darkRed + ' | ' + reset + 'uploaded by ' + channelName + ' | ' + reset + viewCount + bold + darkRed + ' | ' + reset + duration + bold + darkRed + ' | ' + reset + bold + 'https://youtu.be/' + videoID + darkRed + ' | ' + searchResults);
+						} else {
+							console.log(err);
+							bot.say(to, err);
+						}
+					});
+					break;
+			}
+		} else {
+			console.log(err);
 		}
 	});
 }
@@ -694,6 +791,13 @@ bot.addListener('message', function(from, to, text, message) {
 			instagramquery(from, to, text, message);
 			break;
 
+		// youtube
+		case (text.search(/^(\.yt )/g) === 0 && text !== '.yt '):
+			searchYouTube(from, to, text, message);
+			break;
+
+
+		// begin last.fm
 		// .similar
 		case (text.search(/^(\.similar )/g) === 0):
 			similarartists(from, to, text, message);
@@ -718,6 +822,8 @@ bot.addListener('message', function(from, to, text, message) {
 		case (text.search(/^(\.getinfo )/g) === 0):
 			getartistinfo(from, to, text, message);
 			break;
+
+		// end last.fm
 
 		// bobby
 		case (text.search(/^(\.bobby)/g) === 0):
