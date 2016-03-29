@@ -13,7 +13,7 @@ npm install
 
 ###Bot configuration
 
-Rename `channel.example.js` to `channel.js`, rename `opendoors.example.js` to `opendoors.js`, and edit the files accordingly.
+Rename `channels.example.js` to `channels.js`, rename `opendoors.example.js` to `opendoors.js`, and edit the files accordingly.
 
 ###Last.fm database setup
 
@@ -38,25 +38,31 @@ $ node orcabot
 ```
 .g <search term(s)>
 ```
-Will return the top Google search result, as well as a shortlink to the remaining search results.
+Returns the top Google search result, as well as a shortlink to the remaining search results.
 
 ###Google URL shortener
 ```
 .url <link>
 ```
-Will return a shortened http://goo.gl/ link.
+Returns a shortened http://goo.gl/ link.
 
 ###Twitter
 ```
 .tw <twitter username>
 ```
-Will return the most recent tweet by `<username>`.
+Returns the most recent tweet by `<username>`.
 
 ###Instagram
 ```
 .ig <instagram username>
 ```
-Will return the most recent photo/video by `<username>`, along with the caption and filter used (if applicable).
+Returns the most recent photo/video by `<username>`, along with the caption and filter used (if applicable).
+
+###YouTube
+```
+.yt <query>
+```
+Return the top search result for <query>, along with relevant video information and a link to more search results.
 
 ###Last.fm
 ####Adding users to the bot's database
