@@ -88,11 +88,75 @@ var underline = '\u001f';
 // https://www.tumblr.com/video_file/141857188143/tumblr_nun30khTXi1uzby90
 // https://vt.tumblr.com/tumblr_o100t5Onci1rvc5we_480.mp4#_=_
 
-// https://www.youtube.com/watch?v=I4wiVc0NBlo
-// https://www.youtube.com/watch?v=sn-TsS5_6ys&feature=youtu.be
-// https://www.youtube.com/watch?v=sn-TsS5_6ys&feature=youtu.be?t=0m14s
-// https://youtu.be/sn-TsS5_6ys
-// https://youtu.be/MBr3sZNQiQo?t=6m14s
+// get video details
+function getYouTubeVideoInfo(to, videoID) {
+	youtube.videos.list({
+		auth: googleAPIKey,
+		part: 'snippet, contentDetails, status, statistics',
+		id: videoID
+	}, function(err, data) {
+		if (!err) {
+			// top search result = data.items[0]
+			var videoTitle = bold + data.items[0].snippet.title;
+			var channelName = darkRed + bold + data.items[0].snippet.channelTitle;
+			var viewCount = bold + data.items[0].statistics.viewCount.replace(/\B(?=(\d{3})+(?!\d))/g, ",") + reset + ' views'; // add commas to mark every third digit
+
+			var duration = moment.duration(data.items[0].contentDetails.duration, moment.ISO_8601).asSeconds();
+			var contentRating = '';
+			// conversion because moment.js does not support conversion from duration to h:m:s format
+			function getHours(timeInSeconds) {
+				return Math.floor(timeInSeconds / 3600);
+			}
+
+			function getMinutes(timeInSeconds) {
+				return Math.floor(timeInSeconds / 60);
+			}
+
+			// convert video duration from ISO-8601
+			var hours = getHours(duration);
+			if (hours >= 1) { // at least 1:00:00
+				duration = duration - (hours * 3600);
+				var minutes = getMinutes(duration);
+				if (minutes >= 1) { // at least 1:01:00
+					seconds = duration - (minutes * 60);
+					duration = hours + 'h ' + minutes + 'm ' + seconds + 's';
+				} else { // between 1:00:00 and 1:01:00
+					duration = hours + 'h ' + duration + 's';
+				}
+			} else {
+				var minutes = getMinutes(duration);
+				if (minutes >= 1) { // between 1:00 and 1:00:00
+					seconds = duration - (minutes * 60);
+					duration = minutes + 'm ' + seconds + 's';
+				} else { // below 1:00
+					duration = duration + 's';
+				}
+			}
+
+			// find if video is age restricted
+			if (data.items[0].contentDetails.contentRating !== undefined) {
+				contentRating = bold + darkRed + '**NSFW** | ' + reset;
+			}
+
+			bot.say(to, contentRating + videoTitle + darkRed + ' | ' + reset + 'uploaded by ' + channelName + ' | ' + reset + viewCount + bold + darkRed + ' | ' + reset + duration);
+		} else {
+			console.log(err);
+			bot.say(to, err);
+		}
+	});
+}
+
+function announceLink(messageTarget, link) {
+	request(link, function(e, res, html) {
+		if (!e && res.statusCode == 200) {
+			var $ = cheerio.load(html, { lowerCaseTags: true, xmlMode: true });
+			var pageTitle = $('title').text().trim().replace(/\r|\n/g, '').replace(/\s+/g, ' ');
+			bot.say(messageTarget, pageTitle);
+		} else {
+			console.log(e);
+		}
+	});
+}
 
 // url parser
 bot.addListener('message', function(from, to, text, message) {
@@ -106,82 +170,37 @@ bot.addListener('message', function(from, to, text, message) {
 		}
 	}
 
-	// get video details
-	function getYouTubeVideoInfo(to, videoID) {
-		youtube.videos.list({
-			auth: googleAPIKey,
-			part: 'snippet, contentDetails, status, statistics',
-			id: videoID
-		}, function(err, data) {
-			if (!err) {
-				// top search result = data.items[0]
-				var videoTitle = bold + data.items[0].snippet.title;
-				var channelName = darkRed + bold + data.items[0].snippet.channelTitle;
-				var viewCount = bold + data.items[0].statistics.viewCount.replace(/\B(?=(\d{3})+(?!\d))/g, ",") + reset + ' views'; // add commas to mark every third digit
-
-				var duration = moment.duration(data.items[0].contentDetails.duration, moment.ISO_8601).asSeconds();
-				var contentRating = '';
-				// conversion because moment.js does not support conversion from duration to h:m:s format
-				function getHours(timeInSeconds) {
-					return Math.floor(timeInSeconds / 3600);
-				}
-
-				function getMinutes(timeInSeconds) {
-					return Math.floor(timeInSeconds / 60);
-				}
-
-				// convert video duration from ISO-8601
-				var hours = getHours(duration);
-				if (hours >= 1) { // at least 1:00:00
-					duration = duration - (hours * 3600);
-					var minutes = getMinutes(duration);
-					if (minutes >= 1) { // at least 1:01:00
-						seconds = duration - (minutes * 60);
-						duration = hours + 'h ' + minutes + 'm ' + seconds + 's';
-					} else { // between 1:00:00 and 1:01:00
-						duration = hours + 'h ' + duration + 's';
-					}
-				} else {
-					var minutes = getMinutes(duration);
-					if (minutes >= 1) { // between 1:00 and 1:00:00
-						seconds = duration - (minutes * 60);
-						duration = minutes + 'm ' + seconds + 's';
-					} else { // below 1:00
-						duration = duration + 's';
-					}
-				}
-
-				// find if video is age restricted
-				if (data.items[0].contentDetails.contentRating !== undefined) {
-					contentRating = bold + darkRed + '**NSFW** | ' + reset;
-				}
-
-				bot.say(to, contentRating + videoTitle + darkRed + ' | ' + reset + 'uploaded by ' + channelName + ' | ' + reset + viewCount + bold + darkRed + ' | ' + reset + duration);
-			} else {
-				console.log(err);
-				bot.say(to, err);
-			}
-		});
-	}
-
 	if (links.length > 0) {
 		for (var i = 0; i < links.length; i++) {
 			switch(true) {
 				// youtube or youtu.be link
-				case(links[i].search(/youtube.com\//gi) > -1 || links[i].search(/youtu\.be\//gi) > -1):
+				case(links[i].search(/youtube\.com\//gi) > -1 || links[i].search(/youtu\.be\//gi) > -1):
 					// add yt link to ytLinks array while removing yt link from links array
 					var ytLink = links.splice(i, 1).toString();
 					var linkPath = url.parse(ytLink).path.toString();
-
-					if (linkPath.search(/\/watch\?v\=/g) == 0) { // full youtube links
-						// '/watch?v=videoID&asdf' => '/videoID&asdf' => '/videoID' => 'videoID'
-						var videoID = linkPath.replace(/\/watch\?v\=/g, '/').match(/((?:\/[\w\.\-]+)+)/gi)[0].toString().slice(1);
-						getYouTubeVideoInfo(to, videoID);
-					} else if (linkPath.match(/((?:\/[\w\.\-]+)+)/gi)[0].toString()) { // shortened youtube links
-						// '/videoID&asdf' => 'videoID'
-						var videoID = linkPath.match(/((?:\/[\w\.\-]+)+)/gi)[0].toString().slice(1);
-						getYouTubeVideoInfo(to, videoID);
-					}
+					request(ytLink, function(e, res, html) {
+						if (!e && res.statusCode == 200) {
+							if (linkPath.search(/\/watch\?v\=/g) == 0) { // full youtube links
+								// '/watch?v=videoID&asdf' => '/videoID&asdf' => '/videoID' => 'videoID'
+								var videoID = linkPath.replace(/\/watch\?v\=/g, '/').match(/((?:\/[\w\.\-]+)+)/gi)[0].toString().slice(1);
+								getYouTubeVideoInfo(to, videoID);
+							} else if (linkPath.match(/((?:\/[\w\.\-]+)+)/gi)[0].toString()) { // shortened youtube links
+								// '/videoID&asdf' => 'videoID'
+								var videoID = linkPath.match(/((?:\/[\w\.\-]+)+)/gi)[0].toString().slice(1);
+								getYouTubeVideoInfo(to, videoID);
+							}
+						} else {
+							console.log(e);
+							if (e !== null) {
+								bot.say(to, e);
+							}
+						}
+					});
+					break;
+				// twitter.com/username/status/tweetID links
+				case(links[i].search(/(twitter\.com).*?\/.*?(\/)(status)(\/)(\d+)/gi) > -1):
+					var twitterLink = links.splice(i, 1).toString();
+					console.log(twitterLink);
 					break;
 				// announce all other valid links
 				default:
@@ -191,18 +210,6 @@ bot.addListener('message', function(from, to, text, message) {
 		}
 	}
 });
-
-function announceLink(messageTarget, link) {
-	request(link, function(e, res, html) {
-		if (!e && res.statusCode == 200) {
-			var $ = cheerio.load(html, { lowerCaseTags: true, xmlMode: true });
-			var pageTitle = $('title').text().trim().replace(/\r|\n/g, '').replace(/\s+/g, ' ');
-			bot.say(messageTarget, pageTitle);
-		} else {
-			console.log(e);
-		}
-	});
-}
 
 bot.addListener('message', function(from, to, text, message) {
 	if (text.indexOf('hi') > -1) {
@@ -524,7 +531,7 @@ function shortenurl(from, to, text, message) {
 }
 
 // twitter
-function twitterquery(from, to, text, message) {
+function getTwitterStatus(from, to, text, message) {
 	var user = text.replace('.tw ', '');
 	if (user.length > 0) {
 		t.get('statuses/user_timeline', {screen_name: user, count: 1}, function(err, data, response) {
@@ -567,7 +574,6 @@ function instagramquery(from, to, text, message) {
 		}
 	});
 }
-
 
 // youtube
 function searchYouTube(from, to, text, message) {
@@ -912,7 +918,7 @@ bot.addListener('message', function(from, to, text, message) {
 
 		// twitter
 		case (text.search(/^(\.tw )/g) === 0):
-			twitterquery(from, to, text, message);
+			getTwitterStatus(from, to, text, message);
 			break;
 
 		// instagram
