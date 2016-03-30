@@ -140,7 +140,7 @@ function getYouTubeVideoInfo(to, videoID) {
 
 			bot.say(to, contentRating + videoTitle + darkRed + ' | ' + reset + 'uploaded by ' + channelName + ' | ' + reset + viewCount + bold + darkRed + ' | ' + reset + duration);
 		} else {
-			console.log(err);
+			console.log('YOUTUBE -- ' + err);
 			bot.say(to, err);
 		}
 	});
@@ -153,7 +153,7 @@ function announceLink(messageTarget, link) {
 			var pageTitle = $('title').text().trim().replace(/\r|\n/g, '').replace(/\s+/g, ' ');
 			bot.say(messageTarget, pageTitle);
 		} else {
-			console.log(e);
+			console.log('URL PARSER -- ' + e);
 		}
 	});
 }
@@ -191,7 +191,7 @@ bot.addListener('message', function(from, to, text, message) {
 								getYouTubeVideoInfo(to, videoID);
 							}
 						} else {
-							console.log(e);
+							console.log('YOUTUBE -- ' + e);
 							if (e !== null) {
 								bot.say(to, e);
 							}
@@ -207,7 +207,7 @@ bot.addListener('message', function(from, to, text, message) {
 						if (!e && res.statusCode == 200) {
 							t.get('statuses/show/:id', {id: tweetID}, function(err, data, response) {
 								if (err) {
-									console.log(err);
+									console.log('TWITTER -- ' + err);
 									bot.say(to, err.message);
 								} else {
 									var username = data.user.name;
@@ -218,7 +218,7 @@ bot.addListener('message', function(from, to, text, message) {
 								}
 							});
 						} else {
-							console.log(e);
+							console.log('TWITTER -- ' + e);
 							bot.say(to, 'Not a valid tweet!');
 							if (e !== null) {
 								bot.say(to, e);
@@ -264,7 +264,7 @@ function textTranslate(from, to, text, message) {
 		if (!e) {
 			translateLanguageList = data;
 		} else {
-			console.log(e);
+			console.log('TRANSLATOR -- ' + e);
 		}
 	});
 
@@ -272,7 +272,7 @@ function textTranslate(from, to, text, message) {
 		if (!e) {
 			speakLanguageList = data;
 		} else {
-			console.log(e);
+			console.log('TRANSLATOR -- ' + e);
 		}
 	});
 
@@ -320,7 +320,7 @@ function textTranslate(from, to, text, message) {
 											if (!e) {
 												var req = request.post('https://uguu.se/api.php?d=upload-tool', function (err, resp, body) {
 												  if (err) {
-												    console.log(err);
+												    console.log('TRANSLATOR -- ' + err);
 												    bot.say(to, 'There was an error with your translation.');
 												  } else {
 												    bot.say(to, 'Listen: ' + body);
@@ -332,22 +332,22 @@ function textTranslate(from, to, text, message) {
 												  contentType: params.format
 												});
 											} else {
-												console.log(e);
+												console.log('TRANSLATOR -- ' + e);
 											}
 										});
 
 									} else {
-										console.log(e);
+										console.log('TRANSLATOR -- ' + e);
 										bot.say(to, 'There was an error with your translation.');
 									}
 								});
 							} else {
-								console.log(e);
+								console.log('TRANSLATOR -- ' + e);
 								bot.say(to, 'There was an error with your translation.');
 							}
 						});
 					} else {
-						console.log(e);
+						console.log('TRANSLATOR -- ' + e);
 						bot.say(to, 'There was an error with your translation.');
 					}	
 				});
@@ -372,12 +372,12 @@ function textTranslate(from, to, text, message) {
 							if (!e) {
 								bot.say(to, translatedText + ' (' + inputLanguage + ' to ' + outputLanguage + ')');
 							} else {
-								console.log(e);
+								console.log('TRANSLATOR -- ' + e);
 								bot.say(to, 'There was an error with your translation.');
 							}
 						});
 					} else {
-						console.log(e);
+						console.log('TRANSLATOR -- ' + e);
 						bot.say(to, 'There was an error with your translation.');
 					}
 				});
@@ -415,7 +415,7 @@ function textTranslate(from, to, text, message) {
 										if (!e) {
 											var req = request.post('https://uguu.se/api.php?d=upload-tool', function (err, resp, body) {
 											  if (err) {
-											    console.log(err);
+											    console.log('TRANSLATOR -- ' + err);
 											    bot.say(to, 'There was an error with your translation.');
 											  } else {
 											    bot.say(to, 'Listen: ' + body);
@@ -427,22 +427,22 @@ function textTranslate(from, to, text, message) {
 											  contentType: params.format
 											});
 										} else {
-											console.log(e);
+											console.log('TRANSLATOR -- ' + e);
 										}
 									});
 
 								} else {
-									console.log(e);
+									console.log('TRANSLATOR -- ' + e);
 									bot.say(to, 'There was an error with your translation.');
 								}
 							});
 						} else {
-							console.log(e);
+							console.log('TRANSLATOR -- ' + e);
 							bot.say(to, 'There was an error with your translation.');
 						}
 					});
 				} else {
-					console.log(e);
+					console.log('TRANSLATOR -- ' + e);
 					bot.say(to, 'There was an error with your translation.');
 				}	
 			});
@@ -522,7 +522,7 @@ function googlesearch(from, to, text, message) {
 	var text = text.replace('.g ', '');
 	customsearch.cse.list({cx: keys.googleCX, q: text, auth: keys.googleAPIKey}, function(err, resp) {
 		if (err) {
-			console.log(err);
+			console.log('GOOGLE SEARCH -- ' + err);
 			return;
 		}
 		if (resp.searchInformation.formattedTotalResults == 0) {
@@ -533,7 +533,7 @@ function googlesearch(from, to, text, message) {
 			// shorten search results url
 			urlshortener.url.insert({ resource: { longUrl: searchResults }, auth: googleAPIKey }, function(err, result) {
 				if (err) {
-					console.log(err);
+					console.log('URL SHORTENER -- ' + err);
 					bot.say(to, entities.decode(resp.items[0].title).replace(/<(?:.|\n)*?>/gm, '').replace(/\s+/g, ' ').trim() + darkBlue + bold + ' | ' + reset + entities.decode(resp.items[0].snippet).replace(/<(?:.|\n)*?>/gm, '').replace(/\s+/g, ' ').trim() + darkBlue + bold + ' | ' + reset + resp.items[0].link + darkBlue + bold + ' | ' + reset + 'more results: ' + searchResults);
 				} else {
 					bot.say(to, entities.decode(resp.items[0].title).replace(/<(?:.|\n)*?>/gm, '').replace(/\s+/g, ' ').trim() + darkBlue + bold + ' | ' + reset + entities.decode(resp.items[0].snippet).replace(/<(?:.|\n)*?>/gm, '').replace(/\s+/g, ' ').trim() + darkBlue + bold + ' | ' + reset + resp.items[0].link + darkBlue + bold + ' | ' + reset + 'more results: ' + result.id);
@@ -549,7 +549,7 @@ function shortenurl(from, to, text, message) {
 	urlshortener.url.insert({ resource: { longUrl: text }, auth: googleAPIKey }, function(err, result) {
 		if (err) {
 			bot.say(to, 'There was an error in creating your shortlink! ' + err);
-			console.log(err);
+			console.log('URL SHORTENER -- ' + err);
 		} else {
 			bot.say(to, 'shortlink: ' + result.id);
 		}
@@ -562,7 +562,7 @@ function getTwitterStatus(from, to, text, message) {
 	if (user.length > 0) {
 		t.get('statuses/user_timeline', {screen_name: user, count: 1}, function(err, data, response) {
 			if (err) {
-				console.log(err);
+				console.log('TWITTER -- ' + err);
 				bot.say(to, err.message);
 			} else if (data[0] === undefined) {
 				bot.say(to, bold + user + reset + ' hasn\'t tweeted yet!');
@@ -579,24 +579,24 @@ function getTwitterStatus(from, to, text, message) {
 
 // instagram
 function instagramquery(from, to, text, message) {
-	var text = text.replace('.ig ', '');
-	ig.user_search(text, {count: 1}, function(err, users, limit) {
+	var handle = text.replace('.ig ', '');
+	ig.user_search(handle, {count: 1}, function(err, users, limit) {
 		if (err) {
-			console.log(err);
-		} else if (users.length > 0 && (users[0].username).toUpperCase() === text.toUpperCase()) {
+			console.log('INSTAGRAM -- ' + err);
+		} else if (users.length > 0 && (users[0].username).toUpperCase() === handle.toUpperCase()) {
 			ig.user_media_recent(users[0].id, {count: 1}, function(err, medias, pagination, limit) {
-				if (medias === undefined) {
-					bot.say(to, 'Instagram ' + lightBlue + bold + '| ' + reset + 'User ' + bold + users[0].username + reset + ' has no photos to show or has a private account!');
+				if (err) {
+					console.log('INSTAGRAM -- ' + err);
+				} else if (medias === undefined) {
+					bot.say(to, 'User ' + bold + users[0].username + reset + ' has no photos or has a private account!');
 				} else if (medias[0].caption !== null) {
-					bot.say(to, 'Instagram ' + lightBlue + bold + '| ' + reset + 'Most recent post by ' + bold + text + ' (' + medias[0].user.full_name + ')' + lightBlue + ' | ' + reset + medias[0].caption.text + ' ' + medias[0].link + lightBlue + bold + ' | ' + reset + 'Filter: ' + medias[0].filter);
-				} else if (err) {
-					console.log(err);
+					bot.say(to, 'Most recent post by ' + bold + handle + ' (' + medias[0].user.full_name + ')' + lightBlue + ' | ' + reset + medias[0].caption.text + ' ' + medias[0].link + lightBlue + bold + ' | ' + reset + 'Filter: ' + medias[0].filter);
 				} else {
-					bot.say(to, 'Instagram ' + lightBlue + bold + '| ' + reset + 'Most recent post by ' + bold + text + ' (' + medias[0].user.full_name + ')' + lightBlue + ' | ' + reset + 'No caption ' + medias[0].link + lightBlue + bold + ' | ' + reset + 'Filter: ' + medias[0].filter);
+					bot.say(to, 'Most recent post by ' + bold + handle + ' (' + medias[0].user.full_name + ')' + lightBlue + ' | ' + reset + 'No caption ' + medias[0].link + lightBlue + bold + ' | ' + reset + 'Filter: ' + medias[0].filter);
 				}
 			});
 		} else {
-			bot.say(to, 'Instagram ' + lightBlue + bold + '| ' + bold + reset + bold + text + bold + ' is not a registered user on Instagram!');
+			bot.say(to, bold + handle + reset + ' is not a registered user on Instagram!');
 		}
 	});
 }
@@ -608,7 +608,7 @@ function searchYouTube(from, to, text, message) {
 
 	urlshortener.url.insert({ resource: { longUrl: 'https://www.youtube.com/results?search_query=' + ytSearch }, auth: googleAPIKey }, function(err, result) {
 		if (err) {
-			console.log(err);
+			console.log('URL SHORTENER -- ' + err);
 		} else {
 			searchResults = reset + bold + 'More results: ' + reset + result.id;
 		}
@@ -679,14 +679,14 @@ function searchYouTube(from, to, text, message) {
 
 							bot.say(to, contentRating + videoTitle + darkRed + ' | ' + reset + 'uploaded by ' + channelName + ' | ' + reset + viewCount + bold + darkRed + ' | ' + reset + duration + bold + darkRed + ' | ' + reset + bold + 'https://youtu.be/' + videoID + darkRed + ' | ' + searchResults);
 						} else {
-							console.log(err);
+							console.log('YOUTUBE -- ' + err);
 							bot.say(to, err);
 						}
 					});
 					break;
 			}
 		} else {
-			console.log(err);
+			console.log('YOUTUBE -- ' + err);
 		}
 	});
 }
@@ -714,7 +714,7 @@ function similarartists(from, to, text, message) {
 			},
 			error: function(error) {
 				bot.say(to, 'Last.fm ' + lightRed + bold + '| ' + bold + reset + bold + text + bold + ' is not a valid artist on Last.fm!');
-				console.log(error);
+				console.log'LAST.FM -- ' + (error);
 			}
 		}
 	});
@@ -772,7 +772,7 @@ function addtodb(from, to, text, message) {
 			},
 			error: function(error) {
 				bot.say(to, 'Last.fm ' + lightRed + bold + '| ' + bold + reset + bold + text + bold + ' is not a registered username on Last.fm!');
-				console.log(error);
+				console.log'LAST.FM -- ' + (error);
 			}
 		}
 	});
@@ -801,7 +801,7 @@ function lastfmnowplaying(from, to, text, message) {
 				},
 				error: function(error) {
 					bot.say(to, 'Last.fm ' + lightRed + bold + '| ' + bold + reset + bold + handle + bold + ' is not a registered username on Last.fm!');
-					console.log(error);
+					console.log'LAST.FM -- ' + (error);
 				}
 			}
 		});
@@ -858,7 +858,7 @@ function getweeklycharts(from, to, text, message) {
 				},
 				error: function(error) {
 					bot.say(to, 'Last.fm ' + lightRed + bold + '| ' + bold + reset + bold + handle + bold + ' is not a registered username on Last.fm!');
-					console.log(error);
+					console.log'LAST.FM -- ' + (error);
 				}
 			}
 		});
@@ -909,7 +909,7 @@ function getartistinfo(from, to, text, message) {
 			},
 			error: function(error) {
 				bot.say(to, 'Last.fm ' + lightRed + bold + '| ' + bold + reset + bold + text + bold + ' is not a valid artist on Last.fm!');
-				console.log(error);	
+				console.log('LAST.FM -- ' + error);	
 			}
 		}
 	});
