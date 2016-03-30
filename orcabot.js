@@ -79,6 +79,130 @@ var reset = '\u000f';
 var bold = '\u0002';
 var underline = '\u001f';
 
+// nope http://solecollector.com/ https://nodejs.org/api/url.html https://www.youtube.com http://i.imgur.com/u7sDvFj.jpg https://www.youtube.com/watch?v=I4wiVc0NBlo https://drive.google.com/open?id=0B0jc0NJQ4qefVzBIYkxxbmdCVDQ https://youtu.be/sn-TsS5_6ys youtu.be
+
+// https://soundcloud.com/looste/darling
+
+// https://pbs.twimg.com/tweet_video/CewRlEUXIAAUNpY.mp4
+
+// https://www.tumblr.com/video_file/141857188143/tumblr_nun30khTXi1uzby90
+// https://vt.tumblr.com/tumblr_o100t5Onci1rvc5we_480.mp4#_=_
+
+// https://www.youtube.com/watch?v=I4wiVc0NBlo
+// https://www.youtube.com/watch?v=sn-TsS5_6ys&feature=youtu.be
+// https://www.youtube.com/watch?v=sn-TsS5_6ys&feature=youtu.be?t=0m14s
+// https://youtu.be/sn-TsS5_6ys
+// https://youtu.be/MBr3sZNQiQo?t=6m14s
+
+// url parser
+bot.addListener('message', function(from, to, text, message) {
+	var arr = text.split(' ');
+	var links = [];
+
+	// filter URLs
+	for(var i = 0; i < arr.length; i++) {
+		if (url.parse(arr[i]).protocol !== null) {
+			links.push(arr[i]);
+		}
+	}
+
+	// get video details
+	function getYouTubeVideoInfo(to, videoID) {
+		youtube.videos.list({
+			auth: googleAPIKey,
+			part: 'snippet, contentDetails, status, statistics',
+			id: videoID
+		}, function(err, data) {
+			if (!err) {
+				// top search result = data.items[0]
+				var videoTitle = bold + data.items[0].snippet.title;
+				var channelName = darkRed + bold + data.items[0].snippet.channelTitle;
+				var viewCount = bold + data.items[0].statistics.viewCount.replace(/\B(?=(\d{3})+(?!\d))/g, ",") + reset + ' views'; // add commas to mark every third digit
+
+				var duration = moment.duration(data.items[0].contentDetails.duration, moment.ISO_8601).asSeconds();
+				var contentRating = '';
+				// conversion because moment.js does not support conversion from duration to h:m:s format
+				function getHours(timeInSeconds) {
+					return Math.floor(timeInSeconds / 3600);
+				}
+
+				function getMinutes(timeInSeconds) {
+					return Math.floor(timeInSeconds / 60);
+				}
+
+				// convert video duration from ISO-8601
+				var hours = getHours(duration);
+				if (hours >= 1) { // at least 1:00:00
+					duration = duration - (hours * 3600);
+					var minutes = getMinutes(duration);
+					if (minutes >= 1) { // at least 1:01:00
+						seconds = duration - (minutes * 60);
+						duration = hours + 'h ' + minutes + 'm ' + seconds + 's';
+					} else { // between 1:00:00 and 1:01:00
+						duration = hours + 'h ' + duration + 's';
+					}
+				} else {
+					var minutes = getMinutes(duration);
+					if (minutes >= 1) { // between 1:00 and 1:00:00
+						seconds = duration - (minutes * 60);
+						duration = minutes + 'm ' + seconds + 's';
+					} else { // below 1:00
+						duration = duration + 's';
+					}
+				}
+
+				// find if video is age restricted
+				if (data.items[0].contentDetails.contentRating !== undefined) {
+					contentRating = bold + darkRed + '**NSFW** | ' + reset;
+				}
+
+				bot.say(to, contentRating + videoTitle + darkRed + ' | ' + reset + 'uploaded by ' + channelName + ' | ' + reset + viewCount + bold + darkRed + ' | ' + reset + duration);
+			} else {
+				console.log(err);
+				bot.say(to, err);
+			}
+		});
+	}
+
+	if (links.length > 0) {
+		for (var i = 0; i < links.length; i++) {
+			switch(true) {
+				// youtube or youtu.be link
+				case(links[i].search(/youtube.com\//gi) > -1 || links[i].search(/youtu\.be\//gi) > -1):
+					// add yt link to ytLinks array while removing yt link from links array
+					var ytLink = links.splice(i, 1).toString();
+					var linkPath = url.parse(ytLink).path.toString();
+
+					if (linkPath.search(/\/watch\?v\=/g) == 0) { // full youtube links
+						// '/watch?v=videoID&asdf' => '/videoID&asdf' => '/videoID' => 'videoID'
+						var videoID = linkPath.replace(/\/watch\?v\=/g, '/').match(/((?:\/[\w\.\-]+)+)/gi)[0].toString().slice(1);
+						getYouTubeVideoInfo(to, videoID);
+					} else if (linkPath.match(/((?:\/[\w\.\-]+)+)/gi)[0].toString()) { // shortened youtube links
+						var videoID = linkPath.match(/((?:\/[\w\.\-]+)+)/gi)[0].toString().slice(1);
+						getYouTubeVideoInfo(to, videoID);
+					}
+					break;
+				// announce all other valid links
+				default:
+					announceLink(to, links[i]);
+					break;
+			}
+		}
+	}
+});
+
+function announceLink(messageTarget, link) {
+	request(link, function(e, res, html) {
+		if (!e && res.statusCode == 200) {
+			var $ = cheerio.load(html, { lowerCaseTags: true, xmlMode: true });
+			var pageTitle = $('title').text().trim().replace(/\r|\n/g, '').replace(/\s+/g, ' ');
+			bot.say(messageTarget, pageTitle);
+		} else {
+			console.log(e);
+		}
+	});
+}
+
 bot.addListener('message', function(from, to, text, message) {
 	if (text.indexOf('hi') > -1) {
 		bot.say(to, "(⊙ ◡ ⊙)");
@@ -464,11 +588,8 @@ function searchYouTube(from, to, text, message) {
 					bot.say(to, 'No results found!');
 				break;
 				default:
-					// console.log(data);
 					// top search result = data.items[0]
 					var videoID = data.items[0].id.videoId;
-					var videoTitle = bold + data.items[0].snippet.title;
-					var channelName = darkRed + bold + data.items[0].snippet.channelTitle;
 
 					youtube.videos.list({
 						auth: googleAPIKey,
@@ -477,6 +598,8 @@ function searchYouTube(from, to, text, message) {
 					}, function(err, data) {
 						if (!err) {
 							// top search result = data.items[0]
+							var videoTitle = bold + data.items[0].snippet.title;
+							var channelName = darkRed + bold + data.items[0].snippet.channelTitle;
 							var viewCount = bold + data.items[0].statistics.viewCount.replace(/\B(?=(\d{3})+(?!\d))/g, ",") + reset + ' views'; // add commas to mark every third digit
 
 							var duration = moment.duration(data.items[0].contentDetails.duration, moment.ISO_8601).asSeconds();
