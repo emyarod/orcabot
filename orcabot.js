@@ -178,6 +178,7 @@ bot.addListener('message', function(from, to, text, message) {
 						var videoID = linkPath.replace(/\/watch\?v\=/g, '/').match(/((?:\/[\w\.\-]+)+)/gi)[0].toString().slice(1);
 						getYouTubeVideoInfo(to, videoID);
 					} else if (linkPath.match(/((?:\/[\w\.\-]+)+)/gi)[0].toString()) { // shortened youtube links
+						// '/videoID&asdf' => 'videoID'
 						var videoID = linkPath.match(/((?:\/[\w\.\-]+)+)/gi)[0].toString().slice(1);
 						getYouTubeVideoInfo(to, videoID);
 					}
@@ -524,18 +525,23 @@ function shortenurl(from, to, text, message) {
 
 // twitter
 function twitterquery(from, to, text, message) {
-	var text = text.replace('.tw ', '');
-	t.get('statuses/user_timeline', {screen_name: text, count: 1}, function(err, data, response) {
-		if (err) {
-			console.log(err);
-		} else if (data === undefined) {
-			bot.say(to, 'Twitter ' + cyan + bold + '| ' + reset + bold + text + reset + ' is not a valid Twitter handle!');
-		} else if (data[0] === undefined) {
-			bot.say(to, 'Twitter ' + cyan + bold + '| ' + reset + bold + text + reset + ' hasn\'t tweeted yet!');
-		} else {
-			bot.say(to, 'Twitter ' + cyan + bold + '| ' + bold + reset + 'Most recent tweet by ' + bold + data[0].user.name + bold + ' '  + '(' + bold + '@' + data[0].user.screen_name + bold + ')' + bold + cyan + ' | ' + bold + reset + data[0].text + cyan + bold + ' | ' + bold + reset + data[0].created_at);
-		}
-	});
+	var user = text.replace('.tw ', '');
+	if (user.length > 0) {
+		t.get('statuses/user_timeline', {screen_name: user, count: 1}, function(err, data, response) {
+			if (err) {
+				console.log(err);
+				bot.say(to, err.message);
+			} else if (data[0] === undefined) {
+				bot.say(to, bold + user + reset + ' hasn\'t tweeted yet!');
+			} else {
+				var username = data[0].user.name;
+				var screenName = data[0].user.screen_name;
+				var tweet = data[0].text;
+				var date = data[0].created_at;
+				bot.say(to, 'Most recent tweet by ' + bold + username + bold + ' '  + '(' + bold + '@' + screenName + bold + ')' + bold + cyan + ' | ' + bold + reset + tweet + cyan + bold + ' | ' + bold + reset + date);
+			}
+		});
+	}
 }
 
 // instagram
