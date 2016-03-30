@@ -175,18 +175,19 @@ bot.addListener('message', function(from, to, text, message) {
 			switch(true) {
 				// youtube or youtu.be link
 				case(links[i].search(/youtube\.com\//gi) > -1 || links[i].search(/youtu\.be\//gi) > -1):
+					console.log('PARSING YOUTUBE LINK');
 					// add yt link to ytLinks array while removing yt link from links array
 					var ytLink = links.splice(i, 1).toString();
-					var linkPath = url.parse(ytLink).path.toString();
+					var urlPath = url.parse(ytLink).path.toString();
 					request(ytLink, function(e, res, html) {
 						if (!e && res.statusCode == 200) {
-							if (linkPath.search(/\/watch\?v\=/g) == 0) { // full youtube links
+							if (urlPath.search(/\/watch\?v\=/g) == 0) { // full youtube links
 								// '/watch?v=videoID&asdf' => '/videoID&asdf' => '/videoID' => 'videoID'
-								var videoID = linkPath.replace(/\/watch\?v\=/g, '/').match(/((?:\/[\w\.\-]+)+)/gi)[0].toString().slice(1);
+								var videoID = urlPath.replace(/\/watch\?v\=/g, '/').match(/((?:\/[\w\.\-]+)+)/gi)[0].toString().slice(1);
 								getYouTubeVideoInfo(to, videoID);
-							} else if (linkPath.match(/((?:\/[\w\.\-]+)+)/gi)[0].toString()) { // shortened youtube links
+							} else if (urlPath.match(/((?:\/[\w\.\-]+)+)/gi)[0].toString()) { // shortened youtube links
 								// '/videoID&asdf' => 'videoID'
-								var videoID = linkPath.match(/((?:\/[\w\.\-]+)+)/gi)[0].toString().slice(1);
+								var videoID = urlPath.match(/((?:\/[\w\.\-]+)+)/gi)[0].toString().slice(1);
 								getYouTubeVideoInfo(to, videoID);
 							}
 						} else {
@@ -199,17 +200,42 @@ bot.addListener('message', function(from, to, text, message) {
 					break;
 				// twitter.com/username/status/tweetID links
 				case(links[i].search(/(twitter\.com).*?\/.*?(\/)(status)(\/)(\d+)/gi) > -1):
+					console.log('PARSING TWITTER LINK');
 					var twitterLink = links.splice(i, 1).toString();
-					console.log(twitterLink);
+					var tweetID = twitterLink.match(/(status)(\/)(\d+)/gi)[0].toString().slice(7);
+					request(twitterLink, function(e, res, html) {
+						if (!e && res.statusCode == 200) {
+							t.get('statuses/show/:id', {id: tweetID}, function(err, data, response) {
+								if (err) {
+									console.log(err);
+									bot.say(to, err.message);
+								} else {
+									var username = data.user.name;
+									var screenName = data.user.screen_name;
+									var tweet = data.text;
+									var date = data.created_at;
+									bot.say(to, bold + username + ' '  + '(@' + screenName + ')' + cyan + ' | ' + reset + tweet + cyan + bold + ' | ' + reset + date);
+								}
+							});
+						} else {
+							console.log(e);
+							bot.say(to, 'Not a valid tweet!');
+							if (e !== null) {
+								bot.say(to, e);
+							}
+						}
+					});
 					break;
 				// announce all other valid links
 				default:
+					console.log('PARSING OTHER LINK');
 					announceLink(to, links[i]);
 					break;
 			}
 		}
 	}
 });
+
 
 bot.addListener('message', function(from, to, text, message) {
 	if (text.indexOf('hi') > -1) {
@@ -545,7 +571,7 @@ function getTwitterStatus(from, to, text, message) {
 				var screenName = data[0].user.screen_name;
 				var tweet = data[0].text;
 				var date = data[0].created_at;
-				bot.say(to, 'Most recent tweet by ' + bold + username + bold + ' '  + '(' + bold + '@' + screenName + bold + ')' + bold + cyan + ' | ' + bold + reset + tweet + cyan + bold + ' | ' + bold + reset + date);
+				bot.say(to, 'Most recent tweet by ' + bold + username + ' (@' + screenName + ')' + cyan + ' | ' + reset + tweet + cyan + bold + ' | ' + reset + date);
 			}
 		});
 	}
