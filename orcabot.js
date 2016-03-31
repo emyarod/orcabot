@@ -44,8 +44,10 @@ var t = new twit({
 });
 
 ig.use({
+	access_token: keys.igAccessToken,
 	client_id: keys.igClientId,
-	client_secret: keys.igClientSecret
+	client_secret: keys.igClientSecret,
+	redirectURI: keys.igRedirectURI
 });
 
 var lastfm = new LastFmNode({
@@ -226,6 +228,9 @@ bot.addListener('message', function(from, to, text, message) {
 						}
 					});
 					break;
+				// instagram.com
+				// case():
+				// 	break;
 				// announce all other valid links
 				default:
 					console.log('PARSING OTHER LINK');
@@ -579,24 +584,40 @@ function getTwitterStatus(from, to, text, message) {
 
 // instagram
 function instagramquery(from, to, text, message) {
-	var handle = text.replace('.ig ', '');
-	ig.user_search(handle, {count: 1}, function(err, users, limit) {
-		if (err) {
-			console.log('INSTAGRAM -- ' + err);
-		} else if (users.length > 0 && (users[0].username).toUpperCase() === handle.toUpperCase()) {
-			ig.user_media_recent(users[0].id, {count: 1}, function(err, medias, pagination, limit) {
+	var username = text.replace('.ig ', '');
+
+	request('https://www.instagram.com/' + username, function(e, res, html) {
+		if (!e && res.statusCode == 200) {
+			var $ = cheerio.load(html, { lowerCaseTags: true, xmlMode: true });
+			// find "id":"userID" in <script> tag
+			var userID = $('script').text().match(/("id")(:)(")(\d+)(")(,)/gi)[0].slice(6, -2);
+			ig.user_media_recent(userID, {count: 1}, function(err, medias, pagination, limit) {
 				if (err) {
 					console.log('INSTAGRAM -- ' + err);
-				} else if (medias === undefined) {
-					bot.say(to, 'User ' + bold + users[0].username + reset + ' has no photos or has a private account!');
-				} else if (medias[0].caption !== null) {
-					bot.say(to, 'Most recent post by ' + bold + handle + ' (' + medias[0].user.full_name + ')' + lightBlue + ' | ' + reset + medias[0].caption.text + ' ' + medias[0].link + lightBlue + bold + ' | ' + reset + 'Filter: ' + medias[0].filter);
+					if (err.toString().search('you cannot view this resource') > -1) {
+						bot.say(to, 'This Instagram account is private!');
+					}
+				} else if (medias == '') {
+					bot.say(to, 'This user has no posts yet!');
 				} else {
-					bot.say(to, 'Most recent post by ' + bold + handle + ' (' + medias[0].user.full_name + ')' + lightBlue + ' | ' + reset + 'No caption ' + medias[0].link + lightBlue + bold + ' | ' + reset + 'Filter: ' + medias[0].filter);
+					username = medias[0].user.username;
+					var fullname = medias[0].user.full_name;
+					var mediaLink = medias[0].link;
+					var filter = medias[0].filter;
+
+					// media has no caption
+					if (medias[0].caption == null) {
+						var caption = 'No caption ';
+						bot.say(to, 'Most recent post by ' + bold + username + ' (' + fullname + ')' + lightBlue + ' | ' + reset + 'No caption ' + mediaLink + lightBlue + bold + ' | ' + reset + 'Filter: ' + filter);
+					} else { // media has caption
+						var caption = medias[0].caption.text;
+						bot.say(to, 'Most recent post by ' + bold + username + ' (' + fullname + ')' + lightBlue + ' | ' + reset + caption + ' ' + mediaLink+ lightBlue + bold + ' | ' + reset + 'Filter: ' + filter);
+					}
 				}
 			});
 		} else {
-			bot.say(to, bold + handle + reset + ' is not a registered user on Instagram!');
+			console.log('INSTAGRAM request -- ' + e);
+			bot.say(to, 'This Instagram account cannot be found!');
 		}
 	});
 }
@@ -714,7 +735,7 @@ function similarartists(from, to, text, message) {
 			},
 			error: function(error) {
 				bot.say(to, 'Last.fm ' + lightRed + bold + '| ' + bold + reset + bold + text + bold + ' is not a valid artist on Last.fm!');
-				console.log'LAST.FM -- ' + (error);
+				console.log('LAST.FM -- ' + (error));
 			}
 		}
 	});
@@ -772,7 +793,7 @@ function addtodb(from, to, text, message) {
 			},
 			error: function(error) {
 				bot.say(to, 'Last.fm ' + lightRed + bold + '| ' + bold + reset + bold + text + bold + ' is not a registered username on Last.fm!');
-				console.log'LAST.FM -- ' + (error);
+				console.log('LAST.FM -- ' + (error));
 			}
 		}
 	});
@@ -801,7 +822,7 @@ function lastfmnowplaying(from, to, text, message) {
 				},
 				error: function(error) {
 					bot.say(to, 'Last.fm ' + lightRed + bold + '| ' + bold + reset + bold + handle + bold + ' is not a registered username on Last.fm!');
-					console.log'LAST.FM -- ' + (error);
+					console.log('LAST.FM -- ' + (error));
 				}
 			}
 		});
@@ -858,7 +879,7 @@ function getweeklycharts(from, to, text, message) {
 				},
 				error: function(error) {
 					bot.say(to, 'Last.fm ' + lightRed + bold + '| ' + bold + reset + bold + handle + bold + ' is not a registered username on Last.fm!');
-					console.log'LAST.FM -- ' + (error);
+					console.log('LAST.FM -- ' + (error));
 				}
 			}
 		});
