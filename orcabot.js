@@ -33,7 +33,7 @@ var bot = new irc.Client(config.server, config.nick, {
 	realName: config.realname,
 	password: config.password,
 	autoRejoin: true,
-  channels: channels.test
+  channels: channels.default
 });
 
 var t = new twit({
@@ -1010,7 +1010,7 @@ function twitch(game, num) {
 	  	if (parse.stream !== null) {
 	  		game[num].isLive = 1;
 	  		if (game[num].sentFlag === 0) {
-	  			bot.say(channels.test, '\"' + parse.stream.channel.status + '\"' + magenta + ' | ' + reset  + bold + parse.stream.channel.display_name + reset + ' is currently live and playing ' + underline + parse.stream.channel.game + reset + ' at ' + parse.stream.channel.url);
+	  			bot.say(channels.twitch, '\"' + parse.stream.channel.status + '\"' + magenta + ' | ' + reset  + bold + parse.stream.channel.display_name + reset + ' is currently live and playing ' + underline + parse.stream.channel.game + reset + ' at ' + parse.stream.channel.url);
 	  			game[num].sentFlag = 1;
 	  		}
 	  		console.log(game[num].user + ' live live live');
