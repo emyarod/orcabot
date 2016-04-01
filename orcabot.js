@@ -29,7 +29,7 @@ var bot = new irc.Client(config.server, config.nick, {
 	realName: config.realname,
 	password: config.password,
 	autoRejoin: true,
-  channels: channels.default
+  channels: channels.test
 });
 
 var t = new twit({
@@ -285,6 +285,8 @@ bot.addListener('message', function(from, to, text, message) {
 });
 
 bot.addListener('message', function(from, to, text, message) {
+	console.log('text = ' + text);
+	console.log('message = ' + message);
 	if (text.indexOf('hi') > -1) {
 		bot.say(to, '(⊙ ◡ ⊙)');
 	}
@@ -512,7 +514,7 @@ fs.readFile(lastfmdb, 'utf8', function(err, data) {
 // modules
 
 // join
-function join(from, to, text, message) {
+function joinChannels() {
   for(var i = 0; i < channels.default.length; i++) {
   	bot.join(channels.default[i]);
   }
@@ -764,9 +766,9 @@ function searchYouTube(from, to, text, message) {
 // last.fm
 // .similar
 function similarartists(from, to, text, message) {
-	var text = text.replace('.similar ', '');
+	var artist = text.replace('.similar ', '');
 	lastfm.request('artist.getSimilar', {
-		artist: text,
+		artist: artist,
 		autocorrect: 1,
 		limit: 5,
 		handlers: {
@@ -780,10 +782,10 @@ function similarartists(from, to, text, message) {
 					for(i = 0; i < x; i++) {
 						charts.push(data.similarartists.artist[i].name + ' (' + (data.similarartists.artist[i].match*100).toFixed(2) + '% match' + ')');
 					}
-				bot.say(to, 'Last.fm ' + lightRed + bold + '| ' + reset + 'Artists similar to ' + bold + text + lightRed + ' | ' + reset + charts.join(', '));
+				bot.say(to, 'Last.fm ' + lightRed + bold + '| ' + reset + 'Artists similar to ' + bold + artist + lightRed + ' | ' + reset + charts.join(', '));
 			},
 			error: function(error) {
-				bot.say(to, 'Last.fm ' + lightRed + bold + '| ' + bold + reset + bold + text + bold + ' is not a valid artist on Last.fm!');
+				bot.say(to, 'Last.fm ' + lightRed + bold + '| ' + bold + reset + bold + artist + bold + ' is not a valid artist on Last.fm!');
 				console.log('LAST.FM -- ' + (error));
 			}
 		}
@@ -792,9 +794,9 @@ function similarartists(from, to, text, message) {
 
 // add to db
 function addtodb(from, to, text, message) {
-	var text = text.replace('.addlastfm ', '');
+	var lfmUsername = text.replace('.addlastfm ', '');
 	lastfm.request('user.getInfo', {
-		user: text,
+		user: lfmUsername,
 		handlers: {
 			success: function(data) {
 				switch(true) {
@@ -805,14 +807,14 @@ function addtodb(from, to, text, message) {
 						nicks = (hostsAndAccounts[message.host].nicks);
 						nicks.push(message.nick);
 						hostsAndAccounts[message.host] = {
-							'lfm': text,
+							'lfm': lfmUsername,
 							'nicks': nicks
 						};
 						fs.writeFile(lastfmdb, JSON.stringify(hostsAndAccounts, null, 4), function(err) {
 							if (err) throw err;
 							hostNames = Object.keys(hostsAndAccounts);
 						});
-						bot.say(to, 'Last.fm ' + lightRed + bold + '| ' + reset + 'User ' + bold + text + bold + reset + ' is now associated with hostname ' + bold + message.host + reset + ' and nickname ' + message.nick);
+						bot.say(to, 'Last.fm ' + lightRed + bold + '| ' + reset + 'User ' + bold + lfmUsername + bold + reset + ' is now associated with hostname ' + bold + message.host + reset + ' and nickname ' + message.nick);
 						fs.readFile(lastfmdb, 'utf8', function(err, data) {
 							if (err) throw err;
 							hostsAndAccounts = JSON.parse(data);
@@ -823,14 +825,14 @@ function addtodb(from, to, text, message) {
 					default:
 						nicks.push(message.nick);
 						hostsAndAccounts[message.host] = {
-							'lfm': text,
+							'lfm': lfmUsername,
 							'nicks': nicks
 						};
 						fs.writeFile(lastfmdb, JSON.stringify(hostsAndAccounts, null, 4), function(err) {
 							if (err) throw err;
 							hostNames = Object.keys(hostsAndAccounts);
 						});
-						bot.say(to, 'Last.fm ' + lightRed + bold + '| ' + reset + 'User ' + bold + text + bold + reset + ' is now associated with hostname ' + bold + message.host + reset + ' and nickname ' + message.nick);
+						bot.say(to, 'Last.fm ' + lightRed + bold + '| ' + reset + 'User ' + bold + lfmUsername + bold + reset + ' is now associated with hostname ' + bold + message.host + reset + ' and nickname ' + message.nick);
 						fs.readFile(lastfmdb, 'utf8', function(err, data) {
 							if (err) throw err;
 							hostsAndAccounts = JSON.parse(data);
@@ -841,7 +843,7 @@ function addtodb(from, to, text, message) {
 				}
 			},
 			error: function(error) {
-				bot.say(to, 'Last.fm ' + lightRed + bold + '| ' + bold + reset + bold + text + bold + ' is not a registered username on Last.fm!');
+				bot.say(to, 'Last.fm ' + lightRed + bold + '| ' + bold + reset + bold + lfmUsername + bold + ' is not a registered username on Last.fm!');
 				console.log('LAST.FM -- ' + (error));
 			}
 		}
@@ -850,7 +852,7 @@ function addtodb(from, to, text, message) {
 
 // now playing .np <self/user/registered handle>
 function lastfmnowplaying(from, to, text, message) {
-	var text;
+	var lfmUsername;
 	var hostess = JSON.stringify(hostsAndAccounts);
 	function nowplaying(handle) {
 		lastfm.request('user.getRecentTracks', {
@@ -878,21 +880,21 @@ function lastfmnowplaying(from, to, text, message) {
 	}
 	switch(true) {
 		case(text.search('.np ') === 0):
-			text = text.replace('.np ', '');
-			if (hostess.indexOf(text) > -1) {
+			lfmUsername = text.replace('.np ', '');
+			if (hostess.indexOf(lfmUsername) > -1) {
 				for(var i = 0; i < hostNames.length; i++) {
-					if ((JSON.stringify(hostsAndAccounts[hostNames[i]].nicks)).search(text) > -1) {
-						text = hostsAndAccounts[hostNames[i]].lfm;
+					if ((JSON.stringify(hostsAndAccounts[hostNames[i]].nicks)).search(lfmUsername) > -1) {
+						lfmUsername = hostsAndAccounts[hostNames[i]].lfm;
 						break;
 					}
 				}
 			}
-			nowplaying(text);
+			nowplaying(lfmUsername);
 			break;
 		case(text === '.np'):
 			if (hostNames.indexOf(message.host) > -1) {
-				text = Object.getOwnPropertyDescriptor(hostsAndAccounts[message.host], 'lfm').value;
-				nowplaying(text);
+				lfmUsername = Object.getOwnPropertyDescriptor(hostsAndAccounts[message.host], 'lfm').value;
+				nowplaying(lfmUsername);
 			}  else {
 				bot.say(to, 'Last.fm ' + lightRed + bold + '| ' + reset + bold + message.nick + bold + ' doesn\'t exist in my database! Please use ' + '\'' + '.addlastfm <last.fm username>' + '\'' + ' to add yourself the db. You must be identified on ' + config.server + '.');
 			}
@@ -904,7 +906,7 @@ function lastfmnowplaying(from, to, text, message) {
 
 // weekly charts .charts <self/user/registered handle>
 function getweeklycharts(from, to, text, message) {
-	var text;
+	var lfmUsername;
 	var hostess = JSON.stringify(hostsAndAccounts);
 	function getCharts(handle) {
 		lastfm.request('user.getTopArtists', {
@@ -935,21 +937,21 @@ function getweeklycharts(from, to, text, message) {
 	}
 	switch(true) {
 		case(text.search('\\.charts ') === 0):
-			text = text.replace('.charts ', '');
-			if (hostess.indexOf(text) > -1) {
+			lfmUsername = text.replace('.charts ', '');
+			if (hostess.indexOf(lfmUsername) > -1) {
 				for(var i = 0; i < hostNames.length; i++) {
-					if ((JSON.stringify(hostsAndAccounts[hostNames[i]].nicks)).search(text) > -1) {
-						text = hostsAndAccounts[hostNames[i]].lfm;
+					if ((JSON.stringify(hostsAndAccounts[hostNames[i]].nicks)).search(lfmUsername) > -1) {
+						lfmUsername = hostsAndAccounts[hostNames[i]].lfm;
 						break;
 					}
 				}
 			}
-			getCharts(text);
+			getCharts(lfmUsername);
 			break;
 		case(text === '.charts'):
 			if (hostNames.indexOf(message.host) > -1) {
-				text = Object.getOwnPropertyDescriptor(hostsAndAccounts[message.host], 'lfm').value;
-				getCharts(text);
+				lfmUsername = Object.getOwnPropertyDescriptor(hostsAndAccounts[message.host], 'lfm').value;
+				getCharts(lfmUsername);
 			} else {
 				bot.say(to, 'Last.fm ' + lightRed + bold + '| ' + reset + bold + message.nick + bold + ' doesn\'t exist in my database! Please use ' + '\'' + '.addlastfm <last.fm username>' + '\'' + ' to add yourself the db. You must be identified on ' + config.server + '.');
 			}
@@ -961,9 +963,9 @@ function getweeklycharts(from, to, text, message) {
 
 // get artist info <is truncated at ~440 characters
 function getartistinfo(from, to, text, message) {
-	text = text.replace('.getinfo ', '');
+	artist = text.replace('.getinfo ', '');
 	lastfm.request('artist.getInfo', {
-		artist: text,
+		artist: artist,
 		autocorrect: 1,
 		handlers: {
 			success: function(data) {
@@ -978,7 +980,7 @@ function getartistinfo(from, to, text, message) {
 				}
 			},
 			error: function(error) {
-				bot.say(to, 'Last.fm ' + lightRed + bold + '| ' + bold + reset + bold + text + bold + ' is not a valid artist on Last.fm!');
+				bot.say(to, 'Last.fm ' + lightRed + bold + '| ' + bold + reset + bold + artist + bold + ' is not a valid artist on Last.fm!');
 				console.log('LAST.FM -- ' + error);	
 			}
 		}
@@ -1077,7 +1079,7 @@ bot.addListener('message', function(from, to, text, message) {
 	switch(true) {
 		// join
 		case (text.search(/^(\.j)/g) === 0 && message.host === config.handlerHostname):
-			join(from, to, text, message);
+			joinChannels();
 			break;
 
 		// help
