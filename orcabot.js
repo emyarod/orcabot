@@ -239,20 +239,33 @@ bot.addListener('message', function(from, to, text, message) {
 					request(instagramLink, function(e, res, html) {
 						if (!e && res.statusCode == 200) {
 							var $ = cheerio.load(html, { lowerCaseTags: true, xmlMode: true });
-							// find "id":"userID" in <script> tag
-							mediaID = $('meta').text().match(/.*?(media)(\?)(id)(=)(\d+)/gi)[0].slice(6, -2);
-							console.log('mediaid = ' + mediaID);
+							// find "id":"mediaID","caption" in <script> tag
+							if ($('script').text().match(/("id")(:)(")(\d+)(")(,)("caption")/gi) == null) {
+								console.log('no caption');
+								mediaID = $('script').text().match(/("id")(:)(")(\d+)(")(,)("date")/gi)[0].slice(6, -8);
+								console.log(mediaID);
+							} else {
+								mediaID = $('script').text().match(/("id")(:)(")(\d+)(")(,)("caption")/gi)[0].slice(6, -11);
+								console.log(mediaID);
+							}
 							// ig.media(mediaID, function(err, media, remaining, limit) {
 							// 	if (err) {
 							// 		console.log('INSTAGRAM -- ' + err);
 							// 	} else {
 							// 		console.log(media);
+							// 		console.log(media.user.username);
+							// 		var username = media.user.username;
+							// 		var fullname = media.user.full_name;
+							// 		// var filter = media.filter;
+
+
 							// 		// no caption
 							// 		// caption
 							// 	}
 							// });
 						} else {
 							console.log('INSTAGRAM -- ' + e);
+							bot.say(to, 'Sorry, this page isn\'t available');
 						}
 					});
 					break;
@@ -617,7 +630,7 @@ function instagramquery(from, to, text, message) {
 				return;
 			}
 			var $ = cheerio.load(html, { lowerCaseTags: true, xmlMode: true });
-			// find "id":"userID" in <script> tag
+			// find "id":"userID","biography" in <script> tag
 			var userID = $('script').text().match(/("id")(:)(")(\d+)(")(,)("biography")/gi)[0].slice(6, -13);
 			ig.user_media_recent(userID, {count: 1}, function(err, medias, pagination, limit) {
 				if (err) {
@@ -630,17 +643,16 @@ function instagramquery(from, to, text, message) {
 				} else {
 					username = medias[0].user.username;
 					var fullname = medias[0].user.full_name;
-					var mediaLink = medias[0].link;
+					var mediaLink = ' ' + medias[0].link;
 					var filter = medias[0].filter;
 
-					// media has no caption
-					if (medias[0].caption == null) {
-						var caption = 'No caption ';
-						bot.say(to, 'Most recent post by ' + bold + username + ' (' + fullname + ')' + lightBlue + ' | ' + reset + 'No caption ' + mediaLink + lightBlue + bold + ' | ' + reset + 'Filter: ' + filter);
+					if (medias[0].caption == null) { // media has no caption
+						var caption = 'No caption';
 					} else { // media has caption
 						var caption = medias[0].caption.text;
-						bot.say(to, 'Most recent post by ' + bold + username + ' (' + fullname + ')' + lightBlue + ' | ' + reset + caption + ' ' + mediaLink+ lightBlue + bold + ' | ' + reset + 'Filter: ' + filter);
 					}
+
+					bot.say(to, 'Most recent post by ' + bold + username + ' (' + fullname + ')' + lightBlue + ' | ' + reset + caption + mediaLink + lightBlue + bold + ' | ' + reset + 'Filter: ' + filter);
 				}
 			});
 		} else {
