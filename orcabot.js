@@ -241,7 +241,7 @@ bot.addListener('message', function(from, to, text, message) {
 							var $ = cheerio.load(html, { lowerCaseTags: true, xmlMode: true });
 							// find "id":"mediaID","caption" in <script> tag
 							if ($('script').text().match(/("id")(:)(")(\d+)(")(,)("caption")/gi) == null) {
-								var caption = 'No caption';
+								var caption = '';
 								mediaID = $('script').text().match(/("id")(:)(")(\d+)(")(,)("date")/gi)[0].slice(6, -8);
 							} else {
 								mediaID = $('script').text().match(/("id")(:)(")(\d+)(")(,)("caption")/gi)[0].slice(6, -11);
@@ -250,14 +250,30 @@ bot.addListener('message', function(from, to, text, message) {
 								if (err) {
 									console.log('INSTAGRAM -- ' + err);
 								} else {
-									console.log(media);
 									var username = media.user.username;
 									var fullname = media.user.full_name;
-									var filter = media.filter;
-									if (media.caption !== null) {
-										caption = media.caption.text;
+									var filter = 'Filter: ' + media.filter;
+
+									// image or video
+									if (media.videos) {
+										var introText = 'Video by ';
+									} else {
+										var introText = 'Image by ';
 									}
-									bot.say(to, 'Instagram post by ' + bold + username + ' (' + fullname + ')' + lightBlue + ' | ' + reset + caption + lightBlue + bold + ' | ' + reset + 'Filter: ' + filter);
+
+									// caption handling
+									if (media.caption !== null) {
+										caption = media.caption.text + lightBlue + bold + ' | ' + reset;
+									}
+
+									// location handling
+									if (media.location == null) {
+										var location = '';
+									} else {
+										var location = 'Location: ' + media.location.name + lightBlue + bold + ' | ' + reset;
+									}
+
+									bot.say(to, introText + bold + username + ' (' + fullname + ')' + lightBlue + ' | ' + reset + caption + location + filter);
 								}
 							});
 						} else {
