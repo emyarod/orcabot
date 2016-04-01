@@ -5,6 +5,8 @@ this is a simple node.js IRC bot :whale: :whale2:
 
 ###Install [node.js](http://nodejs.org/) and [npm](https://npmjs.org/)
 
+###Clone orcabot
+
 ###Install dependencies
 ```
 cd orcabot
