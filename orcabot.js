@@ -175,6 +175,7 @@ bot.addListener('message', function(from, to, text, message) {
 	if (links.length > 0) {
 		for (var i = 0; i < links.length; i++) {
 			switch(true) {
+
 				// youtube or youtu.be link
 				case(links[i].search(/youtube\.com\//gi) > -1 || links[i].search(/youtu\.be\//gi) > -1):
 					console.log('PARSING YOUTUBE LINK');
@@ -200,6 +201,7 @@ bot.addListener('message', function(from, to, text, message) {
 						}
 					});
 					break;
+
 				// twitter.com/username/status/tweetID links
 				case(links[i].search(/(twitter\.com).*?\/.*?(\/)(status)(\/)(\d+)/gi) > -1):
 					console.log('PARSING TWITTER LINK');
@@ -228,9 +230,33 @@ bot.addListener('message', function(from, to, text, message) {
 						}
 					});
 					break;
-				// instagram.com
-				// case():
-				// 	break;
+
+				// instagram.com/p/mediaID links
+				case(links[i].search(/(instagram\.com)(\/)(p)(\/)/gi) > -1):
+					console.log('PARSING INSTAGRAM LINK');
+					var instagramLink = links.splice(i, 1).toString();
+					var mediaID = instagramLink.match(/.*?((?:\/[\w\.\-]+)+)/gi)[0].toString().slice(28);
+					request(instagramLink, function(e, res, html) {
+						if (!e && res.statusCode == 200) {
+							var $ = cheerio.load(html, { lowerCaseTags: true, xmlMode: true });
+							// find "id":"userID" in <script> tag
+							mediaID = $('meta').text().match(/.*?(media)(\?)(id)(=)(\d+)/gi)[0].slice(6, -2);
+							console.log('mediaid = ' + mediaID);
+							// ig.media(mediaID, function(err, media, remaining, limit) {
+							// 	if (err) {
+							// 		console.log('INSTAGRAM -- ' + err);
+							// 	} else {
+							// 		console.log(media);
+							// 		// no caption
+							// 		// caption
+							// 	}
+							// });
+						} else {
+							console.log('INSTAGRAM -- ' + e);
+						}
+					});
+					break;
+
 				// announce all other valid links
 				default:
 					console.log('PARSING OTHER LINK');
@@ -240,7 +266,6 @@ bot.addListener('message', function(from, to, text, message) {
 		}
 	}
 });
-
 
 bot.addListener('message', function(from, to, text, message) {
 	if (text.indexOf('hi') > -1) {
@@ -588,9 +613,12 @@ function instagramquery(from, to, text, message) {
 
 	request('https://www.instagram.com/' + username, function(e, res, html) {
 		if (!e && res.statusCode == 200) {
+			if (username == '') {
+				return;
+			}
 			var $ = cheerio.load(html, { lowerCaseTags: true, xmlMode: true });
 			// find "id":"userID" in <script> tag
-			var userID = $('script').text().match(/("id")(:)(")(\d+)(")(,)/gi)[0].slice(6, -2);
+			var userID = $('script').text().match(/("id")(:)(")(\d+)(")(,)("biography")/gi)[0].slice(6, -13);
 			ig.user_media_recent(userID, {count: 1}, function(err, medias, pagination, limit) {
 				if (err) {
 					console.log('INSTAGRAM -- ' + err);
