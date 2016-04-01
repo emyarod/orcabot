@@ -101,7 +101,7 @@ function getYouTubeVideoInfo(to, videoID) {
 			// top search result = data.items[0]
 			var videoTitle = bold + data.items[0].snippet.title;
 			var channelName = darkRed + bold + data.items[0].snippet.channelTitle;
-			var viewCount = bold + data.items[0].statistics.viewCount.replace(/\B(?=(\d{3})+(?!\d))/g, ",") + reset + ' views'; // add commas to mark every third digit
+			var viewCount = bold + data.items[0].statistics.viewCount.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + reset + ' views'; // add commas to mark every third digit
 
 			var duration = moment.duration(data.items[0].contentDetails.duration, moment.ISO_8601).asSeconds();
 			var contentRating = '';
@@ -301,11 +301,11 @@ bot.addListener('message', function(from, to, text, message) {
 
 bot.addListener('message', function(from, to, text, message) {
 	if (text.indexOf('hi') > -1) {
-		bot.say(to, "(⊙ ◡ ⊙)");
+		bot.say(to, '(⊙ ◡ ⊙)');
 	}
 
 	if (text.indexOf('flex') > -1) {
-		bot.say(to, "ＮＯ  ＦＬＥＸ  ＺＯＮＥ  ༼ᕗຈ ل͜ຈ༽ᕗ ᕙ( ͡° ͜ʖ ͡°)ᕗ༼ᕗຈ ل͜ຈ༽ᕗ  ＮＯ  ＦＬＥＸ  ＺＯＮＥ");
+		bot.say(to, 'ＮＯ  ＦＬＥＸ  ＺＯＮＥ  ༼ᕗຈ ل͜ຈ༽ᕗ ᕙ( ͡° ͜ʖ ͡°)ᕗ༼ᕗຈ ل͜ຈ༽ᕗ  ＮＯ  ＦＬＥＸ  ＺＯＮＥ');
 	}
 });
 
@@ -354,8 +354,8 @@ function textTranslate(from, to, text, message) {
 			// '.tr auto:languagecode '
 			if (text.search(/^(\.)(tr)( )(auto)(:).*?( )/g) === 0) {
 				var found = text.match(/^(\.)(tr)( )(auto)(:).*?( )/g);
-				var str = found.toString().split(":"); // '.tr code', 'code '
-				params.from = (str[0].split(" "))[1]; // auto
+				var str = found.toString().split(':'); // '.tr code', 'code '
+				params.from = (str[0].split(' '))[1]; // auto
 				params.to = str[1].trim();
 				params.text = text.slice(found[0].length);
 				// gets language code for input text
@@ -416,8 +416,8 @@ function textTranslate(from, to, text, message) {
 			} else if (text.search(/(\.)(tr)( ).*?(:).*?( )/g) === 0) {
 			// '.tr languagecode:languagecode'
 				var found = text.match(/(\.)(tr)( ).*?(:).*?( )/g);
-				var str = found.toString().split(":"); // '.tr code', 'code '
-				params.from = (str[0].split(" "))[1];
+				var str = found.toString().split(':'); // '.tr code', 'code '
+				params.from = (str[0].split(' '))[1];
 				params.to = str[1].trim();
 				params.text = text.slice(found[0].length);
 
@@ -518,7 +518,7 @@ bot.addListener('error', function(message) {
   console.log('error: ', message);
 });
 
-fs.readFile(lastfmdb, "utf8", function(err, data) {
+fs.readFile(lastfmdb, 'utf8', function(err, data) {
 	if (err) throw err;
 	hostsAndAccounts = JSON.parse(data);
 	hostNames = Object.keys(hostsAndAccounts);
@@ -999,6 +999,94 @@ function getartistinfo(from, to, text, message) {
 		}
 	});
 }
+
+// twitch.tv listener
+var streams = require('./streams');
+
+function twitch(game, num) {
+	request('https://api.twitch.tv/kraken/streams/' + game[num].user, function(error, response, body) {
+	  if (!error && response.statusCode === 200) {
+	  	var parse = JSON.parse(body);
+	  	if (parse.stream !== null) {
+	  		game[num].isLive = 1;
+	  		if (game[num].sentFlag === 0) {
+	  			bot.say(channels.test, '\"' + parse.stream.channel.status + '\"' + magenta + ' | ' + reset  + bold + parse.stream.channel.display_name + reset + ' is currently live and playing ' + underline + parse.stream.channel.game + reset + ' at ' + parse.stream.channel.url);
+	  			game[num].sentFlag = 1;
+	  		}
+	  		console.log(game[num].user + ' live live live');
+	  	} else {
+	  		game[num].isLive = 0;
+	  		game[num].sentFlag = 0;
+	  		console.log(game[num].user + ' not live');
+	  	}
+	  }
+	});
+}
+
+var counter = 0;
+var arrKeys = Object.keys(streams);
+var arrCounter = 0;
+
+function timeout() {
+	if (counter < streams[arrKeys[arrCounter]].length) {
+		setTimeout(function() {
+			twitch(streams[arrKeys[arrCounter]], counter);
+			counter++;
+	    timeout(streams[arrKeys[arrCounter]]);
+	  }, 1000);
+	} else {
+		counter = 0;
+		arrCounter++;
+		if (arrCounter < arrKeys.length) {
+			timeout();
+		} else {
+			setTimeout(function() {
+				arrCounter = 0;
+				timeout();
+			}, 60000);
+		}
+	}
+}
+
+timeout();
+
+// .live
+function listTop(game, target) {
+	var list = 'https://api.twitch.tv/kraken/search/streams?q=';
+	var liveChans = [];
+	list = list.concat(game);
+	request(list, function(e, res, body) {
+		var data = JSON.parse(body);
+		for(var i = 0; i < data.streams.length; i++) {
+			liveChans.push(data.streams[i].channel.url);
+		}
+		liveChans = liveChans.join(', ');
+		bot.say(target, 'Twitch.tv' + magenta + ' | ' + reset + 'Live ' + data.streams[0].channel.game + ' streams: ' + liveChans);
+	});
+}
+
+bot.addListener('message', function(from, to, text, message) {
+	var liveChans = [];
+	if (text === '\.live') {
+		for(var a = 0; a < arrKeys.length; a++) {
+			for(var i = 0; i < streams[arrKeys[a]].length; i++) {
+				if (streams[arrKeys[a]][i].isLive !== 0) {
+					liveChans.push('http://twitch.tv/' +  streams[arrKeys[a]][i].user);
+				}
+			}
+		}
+		liveChans = liveChans.join(', ');
+		if (liveChans.length !== 0) {
+			bot.say(to, 'Twitch.tv' + magenta + ' | ' + reset + 'The following channels are live: ' + liveChans);
+		} else {
+			bot.say(to, 'Twitch.tv' + magenta + ' | ' + reset + 'None of our followed channels are currently live!');
+		}
+	} else if (text === '\.live:sc2') {
+		listTop('StarCraft II: Heart of the Swarm', to);
+	} else if (text === '\.live:csgo') {
+		listTop('Counter-Strike: Global Offensive', to);
+	}
+});
 
 bot.addListener('message', function(from, to, text, message) {
 	switch(true) {
