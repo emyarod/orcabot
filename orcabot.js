@@ -79,15 +79,6 @@ var reset = '\u000f';
 var bold = '\u0002';
 var underline = '\u001f';
 
-// nope http://solecollector.com/ https://nodejs.org/api/url.html https://www.youtube.com http://i.imgur.com/u7sDvFj.jpg https://www.youtube.com/watch?v=I4wiVc0NBlo https://drive.google.com/open?id=0B0jc0NJQ4qefVzBIYkxxbmdCVDQ https://youtu.be/sn-TsS5_6ys youtu.be
-
-// https://soundcloud.com/looste/darling
-
-// https://pbs.twimg.com/tweet_video/CewRlEUXIAAUNpY.mp4
-
-// https://www.tumblr.com/video_file/141857188143/tumblr_nun30khTXi1uzby90
-// https://vt.tumblr.com/tumblr_o100t5Onci1rvc5we_480.mp4#_=_
-
 // get video details
 function getYouTubeVideoInfo(to, videoID) {
 	youtube.videos.list({
