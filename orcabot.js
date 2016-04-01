@@ -241,28 +241,25 @@ bot.addListener('message', function(from, to, text, message) {
 							var $ = cheerio.load(html, { lowerCaseTags: true, xmlMode: true });
 							// find "id":"mediaID","caption" in <script> tag
 							if ($('script').text().match(/("id")(:)(")(\d+)(")(,)("caption")/gi) == null) {
-								console.log('no caption');
+								var caption = 'No caption';
 								mediaID = $('script').text().match(/("id")(:)(")(\d+)(")(,)("date")/gi)[0].slice(6, -8);
-								console.log(mediaID);
 							} else {
 								mediaID = $('script').text().match(/("id")(:)(")(\d+)(")(,)("caption")/gi)[0].slice(6, -11);
-								console.log(mediaID);
 							}
-							// ig.media(mediaID, function(err, media, remaining, limit) {
-							// 	if (err) {
-							// 		console.log('INSTAGRAM -- ' + err);
-							// 	} else {
-							// 		console.log(media);
-							// 		console.log(media.user.username);
-							// 		var username = media.user.username;
-							// 		var fullname = media.user.full_name;
-							// 		// var filter = media.filter;
-
-
-							// 		// no caption
-							// 		// caption
-							// 	}
-							// });
+							ig.media(mediaID, function(err, media, remaining, limit) {
+								if (err) {
+									console.log('INSTAGRAM -- ' + err);
+								} else {
+									console.log(media);
+									var username = media.user.username;
+									var fullname = media.user.full_name;
+									var filter = media.filter;
+									if (media.caption !== null) {
+										caption = media.caption.text;
+									}
+									bot.say(to, 'Instagram post by ' + bold + username + ' (' + fullname + ')' + lightBlue + ' | ' + reset + caption + lightBlue + bold + ' | ' + reset + 'Filter: ' + filter);
+								}
+							});
 						} else {
 							console.log('INSTAGRAM -- ' + e);
 							bot.say(to, 'Sorry, this page isn\'t available');
