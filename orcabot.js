@@ -44,10 +44,8 @@ var t = new twit({
 });
 
 ig.use({
-	access_token: keys.igAccessToken,
 	client_id: keys.igClientId,
 	client_secret: keys.igClientSecret,
-	redirectURI: keys.igRedirectURI
 });
 
 var lastfm = new LastFmNode({
