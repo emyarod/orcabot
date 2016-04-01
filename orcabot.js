@@ -251,8 +251,14 @@ bot.addListener('message', function(from, to, text, message) {
 									console.log('INSTAGRAM -- ' + err);
 								} else {
 									var username = media.user.username;
-									var fullname = media.user.full_name;
 									var filter = 'Filter: ' + media.filter;
+
+									// full name
+									if (media.user.full_name == '') {
+										var fullname = media.user.full_name;
+									} else {
+										var fullname = ' (' + media.user.full_name + ')';
+									}
 
 									// image or video
 									if (media.videos) {
@@ -273,7 +279,7 @@ bot.addListener('message', function(from, to, text, message) {
 										var location = 'Location: ' + media.location.name + lightBlue + bold + ' | ' + reset;
 									}
 
-									bot.say(to, introText + bold + username + ' (' + fullname + ')' + lightBlue + ' | ' + reset + caption + location + filter);
+									bot.say(to, introText + bold + username + fullname + lightBlue + ' | ' + reset + caption + location + filter);
 								}
 							});
 						} else {
@@ -655,17 +661,22 @@ function instagramquery(from, to, text, message) {
 					bot.say(to, 'This user has no posts yet!');
 				} else {
 					username = medias[0].user.username;
-					var fullname = medias[0].user.full_name;
-					var mediaLink = ' ' + medias[0].link;
-					var filter = medias[0].filter;
+					if (medias[0].user.full_name == '') {
+						var fullname = medias[0].user.full_name;
+					} else {
+						var fullname = ' (' + medias[0].user.full_name + ')';
+					}
+					
+					var mediaLink = ' ' + medias[0].link + lightBlue + bold + ' | ' + reset;
+					var filter = 'Filter: ' + medias[0].filter;
 
 					if (medias[0].caption == null) { // media has no caption
-						var caption = 'No caption';
+						var caption = '';
 					} else { // media has caption
 						var caption = medias[0].caption.text;
 					}
 
-					bot.say(to, 'Most recent post by ' + bold + username + ' (' + fullname + ')' + lightBlue + ' | ' + reset + caption + mediaLink + lightBlue + bold + ' | ' + reset + 'Filter: ' + filter);
+					bot.say(to, 'Most recent post by ' + bold + username + fullname + lightBlue + ' | ' + reset + caption + mediaLink + filter);
 				}
 			});
 		} else {
