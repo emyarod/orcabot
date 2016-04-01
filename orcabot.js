@@ -14,12 +14,8 @@ var Entities = require('html-entities').AllHtmlEntities;
 var twit = require('twit');
 var LastFmNode = require('lastfm').LastFmNode;
 var ig = require('instagram-node').instagram();
-
 var google = require('googleapis');
 var googleAPIKey = keys.googleAPIKey;
-// var OAuth2 = google.auth.OAuth2;
-// var oauth2Client = new OAuth2(keys.googleClientID, keys.googleClientSecret, keys.googleRedirectURL);
-// google.options({ auth: oauth2Client });
 
 var customsearch = google.customsearch('v1');
 var urlshortener = google.urlshortener('v1');
