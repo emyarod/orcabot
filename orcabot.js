@@ -1041,7 +1041,7 @@ function timeout() {
 	}
 }
 
-// timeout();
+timeout();
 
 // .live
 function listTop(game, target) {
