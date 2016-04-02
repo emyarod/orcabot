@@ -1099,10 +1099,18 @@ bot.addListener('message', function(from, to, text, message) {
 			if (text == '\.part') {
 				channel = message.args[0];
 			} else if (text.search(/^(\.part #)/gi === 0)) {
-				channel = text.slice(6);
-				console.log(channel);
+				channel = text.slice(6).trim();
 			}
 			bot.part(channel);
+			break;
+
+		// .say #channel-name message
+		case (text.search(/(\.)(say)( )(#)/gi) === 0 && message.host === config.handlerHostname):
+			var channel = text.split(' ')[1].trim();
+			console.log(channel);
+			var orcamessage = text.slice(text.split(' ')[1].length + 6);
+			console.log(orcamessage);
+			bot.say(channel, orcamessage);
 			break;
 
 		// help
