@@ -29,7 +29,7 @@ var bot = new irc.Client(config.server, config.nick, {
 	realName: config.realname,
 	password: config.password,
 	autoRejoin: true,
-  channels: channels.default
+  channels: channels.test
 });
 
 var t = new twit({
@@ -47,6 +47,14 @@ ig.use({
 var lastfm = new LastFmNode({
 	api_key: keys.lfmApiKey,
 	secret: keys.lfmSecret
+});
+
+var SC = require('node-soundcloud');
+
+SC.init({
+	id: keys.scClientID,
+	secret: keys.scClientSecret,
+	url: keys.scRedirectURI
 });
 
 // bot response formatting
@@ -222,7 +230,11 @@ bot.addListener('message', function(from, to, text, message) {
 							// find "id":"mediaID","caption" in <script> tag
 							if ($('script').text().match(/("id")(:)(")(\d+)(")(,)("caption")/gi) == null) {
 								var caption = '';
-								mediaID = $('script').text().match(/("id")(:)(")(\d+)(")(,)("date")/gi)[0].slice(6, -8);
+								if ($('script').text().match(/("id")(:)(")(\d+)(")(,)("date")/gi) == null) {
+									bot.say(to, 'Something went wrong on this page!');
+								} else{
+									mediaID = $('script').text().match(/("id")(:)(")(\d+)(")(,)("date")/gi)[0].slice(6, -8);
+								}
 							} else {
 								mediaID = $('script').text().match(/("id")(:)(")(\d+)(")(,)("caption")/gi)[0].slice(6, -11);
 							}
@@ -267,6 +279,14 @@ bot.addListener('message', function(from, to, text, message) {
 							bot.say(to, 'Sorry, this page isn\'t available');
 						}
 					});
+					break;
+
+				// soundcloud links
+				case(links[i].search(/(soundcloud\.com)(\/).*?(\/)/gi) > -1):
+					console.log('PARSING SOUNDCLOUD LINK');
+					var soundcloudLink = links.splice(i, 1).toString();
+					var artist = soundcloudLink.slice(22).match(/.*?(\/).*?(\/)/gi).toString();
+					var track = soundcloudLink.slice(22 + artist.length);
 					break;
 
 				// announce all other valid links
@@ -1041,7 +1061,7 @@ function timeout() {
 	}
 }
 
-timeout();
+// timeout();
 
 // .live
 function listTop(game, target) {
