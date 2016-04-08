@@ -49,14 +49,6 @@ var lastfm = new LastFmNode({
 	secret: keys.lfmSecret
 });
 
-var SC = require('node-soundcloud');
-
-SC.init({
-	id: keys.scClientID,
-	secret: keys.scClientSecret,
-	url: keys.scRedirectURI
-});
-
 // bot response formatting
 var white = '\u000300';
 var black = '\u000301';
@@ -280,15 +272,7 @@ bot.addListener('message', function(from, to, text, message) {
 						}
 					});
 					break;
-
-				// soundcloud links
-				case(links[i].search(/(soundcloud\.com)(\/).*?(\/)/gi) > -1):
-					console.log('PARSING SOUNDCLOUD LINK');
-					var soundcloudLink = links.splice(i, 1).toString();
-					var artist = soundcloudLink.slice(22).match(/.*?(\/).*?(\/)/gi).toString();
-					var track = soundcloudLink.slice(22 + artist.length);
-					break;
-
+					
 				// announce all other valid links
 				default:
 					console.log('PARSING OTHER LINK');
