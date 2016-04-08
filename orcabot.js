@@ -29,7 +29,7 @@ var bot = new irc.Client(config.server, config.nick, {
 	realName: config.realname,
 	password: config.password,
 	autoRejoin: true,
-  channels: channels.test
+  channels: channels.default
 });
 
 var t = new twit({
@@ -1061,7 +1061,7 @@ function timeout() {
 	}
 }
 
-// timeout();
+timeout();
 
 // .live
 function listTop(game, target) {
